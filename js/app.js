@@ -470,7 +470,7 @@ function formatPrice(v, currency){
   return `${currency || "EUR"} ${n.toFixed(2)}`;
 }
 
-function renderHotels(hotelsResponse){
+function renderHotels{
   const list = document.getElementById("hotelsList"); // ou o id que você usa
   if (!list) return;
 
@@ -482,7 +482,7 @@ function renderHotels(hotelsResponse){
 
   if (!hotels.length){
     list.innerHTML = `<p class="note">Não encontramos hotéis para essa busca.</p>`;
-    return;
+    return;}
   }
 
   list.innerHTML = hotels.map(h => {
