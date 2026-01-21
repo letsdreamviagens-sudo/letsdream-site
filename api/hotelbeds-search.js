@@ -7,13 +7,20 @@ function sign(apiKey, secret) {
 
 export default async function handler(req, res) {
   try {
-    // CORS básico (permite o seu site chamar essa API)
+    // CORS básico
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     if (req.method === "OPTIONS") return res.status(200).end();
 
-    const { destination, checkin, checkout, adults = "2", children = "0", childrenAges = "" } = req.query;
+    const {
+      destination,
+      checkin,
+      checkout,
+      adults = "2",
+      children = "0",
+      childrenAges = ""
+    } = req.query;
 
     if (!destination || !checkin || !checkout) {
       return res.status(400).json({ error: "Faltou destination/checkin/checkout" });
@@ -24,45 +31,48 @@ export default async function handler(req, res) {
     const HOTELBEDS_BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
 
     if (!HOTELBEDS_API_KEY || !HOTELBEDS_SECRET) {
-      return res.status(500).json({ error: "Env vars ausentes: HOTELBEDS_API_KEY e/ou HOTELBEDS_SECRET" });
+      return res.status(500).json({ error: "Env vars HOTELBEDS_API_KEY / HOTELBEDS_SECRET não configuradas" });
     }
 
-    // Monta paxes (idades das crianças)
-    const kids = parseInt(children, 10) || 0;
+    // Monta occupancies (adultos/crianças/idades)
+    const kids = parseInt(children || "0", 10);
     const ages = String(childrenAges || "")
       .split(",")
-      .map(s => s.trim())
-      .filter(Boolean)
-      .slice(0, kids)
-      .map(a => parseInt(a, 10))
+      .map(s => parseInt(s.trim(), 10))
       .filter(n => Number.isFinite(n));
 
-    const paxes = [];
-    for (let i = 0; i < kids; i++) {
-      paxes.push({ type: "CH", age: ages[i] ?? 7 }); // default 7 se não mandar
+    // Se tem crianças, precisa mandar as idades
+    if (kids > 0 && ages.length !== kids) {
+      return res.status(400).json({ error: "childrenAges deve ter a mesma quantidade de idades que children (ex: 7,10)" });
     }
+
+    const occupancy = {
+      rooms: 1,
+      adults: parseInt(adults || "2", 10),
+      children: kids,
+      paxes: [
+        ...Array.from({ length: parseInt(adults || "2", 10) }, () => ({ type: "AD" })),
+        ...ages.map(a => ({ type: "CH", age: a }))
+      ]
+    };
 
     const payload = {
       stay: { checkIn: checkin, checkOut: checkout },
-      occupancies: [
-        {
-          rooms: 1,
-          adults: parseInt(adults, 10) || 2,
-          children: kids,
-          paxes
-        }
-      ],
-      destination: { code: String(destination).toUpperCase() }
+      occupancies: [occupancy],
+      destination: { code: destination }
+      // Se quiser limitar resultado:
+      // , filter: { maxHotels: 25 }
     };
 
     const url = `${HOTELBEDS_BASE}/hotel-api/1.0/hotels`;
+
     const r = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-key": HOTELBEDS_API_KEY,
         "X-Signature": sign(HOTELBEDS_API_KEY, HOTELBEDS_SECRET),
-        "Accept": "application/json"
+        Accept: "application/json"
       },
       body: JSON.stringify(payload)
     });
