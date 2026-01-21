@@ -1,4 +1,4 @@
-export async function handler(event) {
+export default async function handler(req, res) {
   try {
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Use POST" };
@@ -52,3 +52,4 @@ export async function handler(event) {
     return { statusCode: 500, body: String(err) };
   }
 }
+
