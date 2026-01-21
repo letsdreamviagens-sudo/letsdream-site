@@ -1,55 +1,40 @@
 export default async function handler(req, res) {
   try {
-    if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Use POST" };
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    if (req.method === "OPTIONS") return res.status(200).end();
+
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Use POST" });
     }
 
-    const token = process.env.PAGBANK_TOKEN;
-    if (!token) {
-      return { statusCode: 500, body: "Token PagBank não configurado" };
+    const PAGBANK_TOKEN = process.env.PAGBANK_TOKEN;
+    if (!PAGBANK_TOKEN) {
+      return res.status(500).json({ error: "Env var ausente: PAGBANK_TOKEN" });
     }
 
-    const { items } = JSON.parse(event.body || "{}");
+    const body = req.body || {};
+    const payload = body.payload || body; // aceita {payload:{...}} ou direto
 
-    const payload = {
-      reference_id: "LETS-" + Date.now(),
-      items: items.map(i => ({
-        name: i.name,
-        quantity: i.quantity,
-        unit_amount: i.unit_amount // em centavos
-      })),
-      payment_methods_configs: [
-        {
-          type: "CREDIT_CARD",
-          config_options: [
-            { option: "INSTALLMENTS_LIMIT", value: "10" },
-            { option: "INTEREST_FREE_INSTALLMENTS", value: "0" }
-          ]
-        }
-      ],
-      redirect_url: "https://super-crumble-455151.netlify.app/"
-    };
-
-    const resp = await fetch("https://api.pagseguro.com/checkouts", {
+    const r = await fetch("https://sandbox.api.pagseguro.com/checkouts", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${PAGBANK_TOKEN}`,
+        "Accept": "application/json"
       },
       body: JSON.stringify(payload)
     });
 
-    const data = await resp.json();
+    const data = await r.json().catch(() => ({}));
 
-    const payLink = data.links?.find(l => l.rel === "PAY")?.href;
+    if (!r.ok) {
+      return res.status(r.status).json({ error: "PagBank retornou erro", status: r.status, details: data });
+    }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ pay_url: payLink })
-    };
-
-  } catch (err) {
-    return { statusCode: 500, body: String(err) };
+    return res.status(200).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
   }
 }
-
