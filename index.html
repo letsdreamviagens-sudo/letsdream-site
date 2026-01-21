@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Let’s Dream Viagens</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css" />
+<link rel="icon" href="logo.png">
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="nav">
+        <a class="brand" href="#topo" id="brandHome">
+          <img src="img/logo.png" alt="Logo Let’s Dream" />
+          <div class="name"><span>Let’s</span> Dream</div>
+        </a>
+
+        <div class="navlinks">
+          <a href="#buscar" class="nav-home">Buscar hotéis</a>
+          <a href="#blog" class="nav-home">Inspirações</a>
+          <a href="#resultados" class="nav-home">Resultados</a>
+          <a href="#extras" class="nav-home">Transfers & Ingressos</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+          <a class="btn btn-secondary" href="mailto:atendimento@letsdreamviagens.com.br">Atendimento</a>
+          <button class="cart-btn" type="button" id="btnOpenCart">
+            Carrinho <span id="cartCount" class="badge">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- HOME PAGE -->
+  <div id="homePage" class="page show">
+    <div id="topo" class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div class="card">
+            <div class="pill"><span class="dot"></span> Let’s Dream Viagens</div>
+            <h1>Nosso sonho é tornar seu sonho realidade.</h1>
+            <p class="sub">Viagens em família com planejamento inteligente, suporte e carinho em cada detalhe.</p>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a class="btn btn-primary" href="#buscar">Buscar hotéis</a>
+              <a class="btn btn-outline" href="#blog">Ver inspirações</a>
+            </div>
+
+            <div class="mini">
+              <div class="box"><b>Família</b><span>roteiro com crianças</span></div>
+              <div class="box"><b>Suporte</b><span>antes e depois</span></div>
+              <div class="box"><b>Pix / Cartão</b><span>até 10x (depois)</span></div>
+            </div>
+          </div>
+
+          <div class="card" id="buscar">
+            <div class="search-title">
+              <h2>Buscar hotéis</h2>
+              <div class="hint">Modo orçamento (comparar preços)</div>
+            </div>
+
+            <form id="searchForm">
+              <div class="form">
+                <div class="field">
+                  <label>Cidade</label>
+                  <input id="city" list="cities" placeholder="Ex: Orlando, Miami, Gramado, Cancún" required />
+                  <datalist id="cities">
+                    <option value="Orlando"></option>
+                    <option value="Miami"></option>
+                    <option value="Gramado"></option>
+                    <option value="Cancún"></option>
+                    <option value="Paris"></option>
+                    <option value="Londres"></option>
+                    <option value="Rio de Janeiro"></option>
+                    <option value="São Paulo"></option>
+                  </datalist>
+                  <div class="note">Digite o nome da cidade (sem sigla).</div>
+                </div>
+
+                <div class="field">
+                  <label>Check-in</label>
+                  <input id="checkin" type="date" required />
+                </div>
+
+                <div class="field">
+                  <label>Check-out</label>
+                  <input id="checkout" type="date" required />
+                </div>
+
+                <div class="field">
+                  <label>Adultos</label>
+                  <select id="adults">
+                    <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Crianças</label>
+                  <select id="children">
+                    <option selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="childrenAges"></div>
+
+              <div style="margin-top:12px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+                <button class="btn btn-primary" type="submit">Pesquisar</button>
+                <button class="btn btn-ghost" type="button" id="btnClearSearch">Limpar</button>
+              </div>
+            </form>
+
+            <div class="note">
+              * Valores exibidos são <b>somente orçamentos</b> e podem variar até a confirmação da reserva.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blog / Inspirações -->
+    <section id="blog">
+      <div class="wrap">
+        <div class="section-title">
+          <h2>Inspirações & Dicas</h2>
+          <div class="hint">estilo blog • com fotos</div>
+        </div>
+
+        <div class="blog-grid">
+          <article class="tile">
+            <div class="img" style="background-image:url('img/orlando.jpg');"></div>
+            <div class="body">
+              <div class="pill"><span class="dot"></span> Orlando em família</div>
+              <p class="sub" style="margin:10px 0 0;">Melhores regiões para ficar e dicas práticas para ir com crianças.</p>
+            </div>
+          </article>
+
+          <article class="tile">
+            <div class="img" style="background-image:url('img/caribe.jpg');"></div>
+            <div class="body">
+              <div class="pill"><span class="dot"></span> Caribe: resorts</div>
+              <p class="sub" style="margin:10px 0 0;">Como escolher resort bom para família sem dor de cabeça.</p>
+            </div>
+          </article>
+
+          <article class="tile">
+            <div class="img" style="background-image:url('img/brasil.jpg');"></div>
+            <div class="body">
+              <div class="pill"><span class="dot"></span> Brasil: resorts</div>
+              <p class="sub" style="margin:10px 0 0;">Top destinos para descansar e curtir com as crianças.</p>
+            </div>
+          </article>
+        </div>
+
+        <p class="note">
+          As fotos acima são exemplos. Você pode trocar por suas imagens na pasta <b>img/</b> sem mexer em código.
+        </p>
+      </div>
+    </section>
+
+    <!-- Resultados -->
+    <section id="resultados">
+      <div class="wrap">
+        <div class="section-title">
+          <h2>Resultados (menor preço primeiro)</h2>
+          <div class="hint" id="resultsHint">Pesquise acima para ver opções</div>
+        </div>
+
+        <div id="hotelsList" class="list"></div>
+
+        <div class="note">
+          * Os valores são <b>somente orçamentos</b> e podem sofrer variação por disponibilidade, regras do fornecedor e câmbio/taxas.
+        </div>
+      </div>
+    </section>
+
+    <!-- Extras (Transfers/Ingressos) -->
+    <section id="extras">
+      <div class="wrap">
+        <div class="section-title">
+          <h2>Atividades, Transfers & Ingressos</h2>
+          <div class="hint">adicione ao carrinho para solicitar orçamento</div>
+        </div>
+
+        <div id="extrasList" class="list"></div>
+
+        <p class="note">
+          Valores apresentados são apenas orçamentos e podem sofrer variação no momento da confirmação final (disponibilidade e regras do fornecedor).
+        </p>
+      </div>
+    </section>
+
+    <!-- Atendimento -->
+    <section id="atendimento">
+      <div class="wrap">
+        <div class="card">
+          <h2 style="margin:0 0 6px;">Atendimento & Orçamento</h2>
+          <p class="note" style="margin-top:6px;">
+            Preencha seus dados para enviar o orçamento. Os valores apresentados são apenas estimativas e podem sofrer variação no momento da confirmação final.
+          </p>
+
+          <div class="form" style="grid-template-columns:1fr 1fr; margin-top:10px;">
+            <div class="field">
+              <label>Nome</label>
+              <input id="clienteNome" type="text" placeholder="Seu nome completo">
+            </div>
+
+            <div class="field">
+              <label>E-mail</label>
+              <input id="clienteEmail" type="email" placeholder="seu@email.com">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+            <button class="btn btn-primary" type="button" id="btnWhatsAppQuick">Enviar no WhatsApp</button>
+            <a class="btn btn-outline" href="mailto:atendimento@letsdreamviagens.com.br">Enviar por e-mail</a>
+            <button class="btn btn-ghost" type="button" id="btnGoQuote">Página de orçamento</button>
+          </div>
+
+          <p class="note" style="margin-top:10px;">
+            Atendimento: <b>(11) 98981-1183</b> • atendimento@letsdreamviagens.com.br
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap" style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+        <div>© Let’s Dream Viagens</div>
+        <div>Suporte: <a href="mailto:atendimento@letsdreamviagens.com.br">atendimento@letsdreamviagens.com.br</a></div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ORÇAMENTO PAGE -->
+  <div id="quotePage" class="page">
+    <div class="wrap">
+      <div class="section-title">
+        <h2>Orçamento</h2>
+        <div class="hint">confira, inclua atividades/transfer e envie pra gente</div>
+      </div>
+
+      <div class="two">
+        <!-- Left -->
+        <div class="card">
+          <div class="pill"><span class="dot"></span> Dados do viajante</div>
+          <div class="divider"></div>
+
+          <div class="field">
+            <label>Nome completo</label>
+            <input id="qName" placeholder="Seu nome" />
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+            <div class="field">
+              <label>E-mail</label>
+              <input id="qEmail" type="email" placeholder="seu@email.com" />
+            </div>
+            <div class="field">
+              <label>Telefone / WhatsApp</label>
+              <input id="qPhone" placeholder="(DDD) 99999-9999" />
+            </div>
+          </div>
+
+          <div style="margin-top:10px;" class="field">
+            <label>Observações</label>
+            <input id="qObs" placeholder="Ex: quero perto do parque / berço / café da manhã..." />
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="pill"><span class="dot"></span> Atividades & Transfer</div>
+          <p class="note" style="margin-top:10px;">Selecione extras (opcional). Tudo aqui é <b>orçamento</b>.</p>
+
+          <div id="addonsArea" class="checklist"></div>
+
+          <div class="divider"></div>
+
+          <div class="note">
+            <b>Aviso:</b> os valores exibidos são <b>somente orçamentos</b> e podem variar até a confirmação.
+          </div>
+        </div>
+
+        <!-- Right -->
+        <div class="card">
+          <div class="pill"><span class="dot"></span> Seu carrinho</div>
+          <div class="divider"></div>
+
+          <div id="quoteSummary"></div>
+
+          <div class="divider"></div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-outline" type="button" id="btnBackHome">Voltar</button>
+            <button class="btn btn-secondary" type="button" id="btnEmailQuote">Enviar por E-mail</button>
+            <button class="btn btn-primary" type="button" id="btnWhatsQuote">Enviar por WhatsApp</button>
+          </div>
+
+          <p class="note" style="margin-top:10px;">
+            Valores apresentados são apenas orçamentos e podem sofrer variação no momento da confirmação.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div id="cartBackdrop" class="backdrop"></div>
+  <aside id="cartDrawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <b>Carrinho</b>
+      <button class="btn btn-outline" type="button" id="btnCloseCart" style="padding:10px 12px;">Fechar</button>
+    </div>
+    <div class="drawer-body">
+      <div id="cartItems"></div>
+<button class="btn btn-primary" onclick="pagarPagSeguro()" style="margin-top:12px;">
+  Pagar com PagSeguro
+</button>
+      <div class="divider"></div>
+      <div class="row">
+        <b>Total</b>
+        <b id="cartTotal">R$ 0</b>
+      </div>
+      <p class="note">
+        Valores apresentados são apenas orçamentos e podem sofrer variação no momento da confirmação.
+      </p>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn btn-ghost" type="button" id="btnClearCart">Limpar</button>
+      <button class="btn btn-secondary" type="button" id="btnGoQuote2">Orçamento</button>
+      <button class="btn btn-primary" type="button" id="btnWhatsCart">WhatsApp</button>
+    </div>
+  </aside>
+
+  <!-- Floating Top Button -->
+  <button id="btnTopo" type="button" title="Voltar ao topo">↑</button>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
