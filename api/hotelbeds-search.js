@@ -1,89 +1,85 @@
+import crypto from "crypto";
+
+function sign(apiKey, secret) {
+  const ts = Math.floor(Date.now() / 1000);
+  return crypto.createHash("sha256").update(apiKey + secret + ts).digest("hex");
+}
+
 export default async function handler(req, res) {
   try {
-    // Permite chamar pelo navegador
+    // CORS básico (permite o seu site chamar essa API)
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-    // Preflight (às vezes o browser manda)
     if (req.method === "OPTIONS") return res.status(200).end();
 
-    if (req.method !== "GET") {
-      return res.status(405).json({ error: "Use GET" });
-    }
-
-    const { destination, checkin, checkout, adults, children, childrenAges } = req.query;
+    const { destination, checkin, checkout, adults = "2", children = "0", childrenAges = "" } = req.query;
 
     if (!destination || !checkin || !checkout) {
       return res.status(400).json({ error: "Faltou destination/checkin/checkout" });
     }
 
-    // 🔑 Variáveis do ambiente (coloque na Vercel depois)
-    const API_KEY = process.env.HOTELBEDS_API_KEY;
-    const SECRET = process.env.HOTELBEDS_SECRET;
-    const BASE_URL = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
+    const HOTELBEDS_API_KEY = process.env.HOTELBEDS_API_KEY;
+    const HOTELBEDS_SECRET = process.env.HOTELBEDS_SECRET;
+    const HOTELBEDS_BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
 
-    if (!API_KEY || !SECRET) {
-      return res.status(500).json({ error: "Faltou HOTELBEDS_API_KEY ou HOTELBEDS_SECRET na Vercel" });
+    if (!HOTELBEDS_API_KEY || !HOTELBEDS_SECRET) {
+      return res.status(500).json({ error: "Env vars ausentes: HOTELBEDS_API_KEY e/ou HOTELBEDS_SECRET" });
     }
 
-    // ====== Assinatura Hotelbeds (X-Signature) ======
-    const ts = Math.floor(Date.now() / 1000).toString();
+    // Monta paxes (idades das crianças)
+    const kids = parseInt(children, 10) || 0;
+    const ages = String(childrenAges || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean)
+      .slice(0, kids)
+      .map(a => parseInt(a, 10))
+      .filter(n => Number.isFinite(n));
 
-    const crypto = await import("crypto");
-    const signature = crypto.createHash("sha256").update(API_KEY + SECRET + ts).digest("hex");
+    const paxes = [];
+    for (let i = 0; i < kids; i++) {
+      paxes.push({ type: "CH", age: ages[i] ?? 7 }); // default 7 se não mandar
+    }
 
-    // ====== Exemplo de chamada (ajuste se seu endpoint for diferente) ======
-    // Obs: aqui eu deixo “genérico” porque Hotelbeds pode variar conforme produto/endpoint.
-    // Se seu código anterior já chamava um endpoint específico, me diga qual e eu ajusto.
-    const url = `${BASE_URL}/hotel-api/1.0/hotels`;
-
-    const body = {
+    const payload = {
       stay: { checkIn: checkin, checkOut: checkout },
       occupancies: [
         {
           rooms: 1,
-          adults: Number(adults || 2),
-          children: Number(children || 0),
-          paxes: buildPaxes(Number(adults || 2), Number(children || 0), childrenAges),
-        },
+          adults: parseInt(adults, 10) || 2,
+          children: kids,
+          paxes
+        }
       ],
-      destination: { code: destination }, // se você usa ORL etc
+      destination: { code: String(destination).toUpperCase() }
     };
 
+    const url = `${HOTELBEDS_BASE}/hotel-api/1.0/hotels`;
     const r = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-key": API_KEY,
-        "X-Signature": signature,
+        "Api-key": HOTELBEDS_API_KEY,
+        "X-Signature": sign(HOTELBEDS_API_KEY, HOTELBEDS_SECRET),
+        "Accept": "application/json"
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload)
     });
 
-    const text = await r.text();
-    let data;
-    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+    const data = await r.json().catch(() => ({}));
 
-    return res.status(r.status).json(data);
+    if (!r.ok) {
+      return res.status(r.status).json({
+        error: "Hotelbeds retornou erro",
+        status: r.status,
+        details: data
+      });
+    }
+
+    return res.status(200).json(data);
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: String(e?.message || e) });
+    return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
   }
 }
 
-function buildPaxes(adults, children, childrenAges) {
-  const paxes = [];
-  for (let i = 0; i < adults; i++) paxes.push({ type: "AD" });
-
-  // childrenAges pode vir "7" ou "7,5"
-  const ages = String(childrenAges || "")
-    .split(",")
-    .map(s => Number(s.trim()))
-    .filter(n => !Number.isNaN(n));
-
-  for (let i = 0; i < children; i++) {
-    paxes.push({ type: "CH", age: ages[i] || 7 });
-  }
-  return paxes;
-}
