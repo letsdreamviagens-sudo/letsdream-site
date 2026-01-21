@@ -459,4 +459,91 @@ if (!checkoutUrl) {
 
 window.location.href = checkoutUrl;
 }
+function toNumber(x){
+  const n = parseFloat(String(x).replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatPrice(v, currency){
+  // Hotelbeds às vezes retorna como string
+  const n = toNumber(v);
+  return `${currency || "EUR"} ${n.toFixed(2)}`;
+}
+
+function renderHotels(hotelsResponse){
+  const list = document.getElementById("hotelsList"); // ou o id que você usa
+  if (!list) return;
+
+  const hotels = hotelsResponse?.hotels?.hotels || [];
+  const currency = hotelsResponse?.hotels?.hotels?.[0]?.currency || hotelsResponse?.currency;
+
+  // Ordena por minRate
+  hotels.sort((a,b)=> toNumber(a.minRate) - toNumber(b.minRate));
+
+  if (!hotels.length){
+    list.innerHTML = `<p class="note">Não encontramos hotéis para essa busca.</p>`;
+    return;
+  }
+
+  list.innerHTML = hotels.map(h => {
+    const bairro = h.zoneName ? h.zoneName : "—";
+    const preco = formatPrice(h.minRate, h.currency || currency);
+
+    // Imagem padrão por destino (você já tem)
+    const dest = (h.destinationCode || "").toUpperCase();
+    let img = "img/brasil.jpg";
+    if (dest === "NYC" || dest === "MIA" || dest === "ORL") img = "img/orlando.jpg";
+    if (dest === "CUN" || dest === "PUJ") img = "img/caribe.jpg";
+
+    return `
+      <div class="hotel">
+        <div class="img" style="background-image:url('${img}')"></div>
+        <div class="top">
+          <div>
+            <h3>${h.name}</h3>
+            <div class="meta">${h.categoryName || ""} • Bairro: ${bairro}</div>
+          </div>
+          <div class="price">
+            <small>Menor preço</small>
+            ${preco}
+          </div>
+        </div>
+
+        <div class="tags">
+          <span class="tag">${h.boardName || "Orçamento"}</span>
+          <span class="tag orange">Hotelbeds</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button" onclick="selectHotel(${h.code}, '${escapeHtml(h.name)}', '${escapeHtml(bairro)}', '${h.minRate}', '${h.currency || ""}')">
+            Selecionar hotel
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function escapeHtml(str){
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function selectHotel(code, name, bairro, minRate, currency){
+  // Aqui você joga no carrinho / orçamento
+  window.selectedHotel = {
+    code, name, bairro,
+    minRate: toNumber(minRate),
+    currency
+  };
+
+  // Exemplo: adiciona no carrinho (se você já tiver carrinho)
+  // addHotelToCart(window.selectedHotel);
+
+  alert(`Hotel selecionado: ${name}\nBairro: ${bairro}\nPreço: ${currency} ${minRate}`);
+}
 
