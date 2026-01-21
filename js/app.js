@@ -473,6 +473,34 @@ function formatPrice(v, currency){
 function renderHotels{
   const list = document.getElementById("hotelsList"); // ou o id que você usa
   if (!list) return;
+  const city = document.getElementById("city").value.trim();
+const checkin = document.getElementById("checkin").value;
+const checkout = document.getElementById("checkout").value;
+const adults = document.getElementById("adults").value;
+const children = document.getElementById("children").value;
+
+if (!city || !checkin || !checkout) {
+  alert("Preencha cidade, check-in e check-out.");
+  return;
+}
+
+// Para testar: use NYC (porque já sabemos que retorna hotéis)
+// Depois trocamos para Orlando por nome.
+const destination = city.toUpperCase();
+
+const url = `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+
+const r = await fetch(url);
+const data = await r.json();
+
+if (!r.ok) {
+  console.log("Erro Hotelbeds:", data);
+  alert("Erro ao buscar hotéis. Veja o console (F12).");
+  return;
+}
+
+// ✅ ESTA É A LINHA QUE ESTAVA FALTANDO
+renderHotels(data);
 
   const hotels = hotelsResponse?.hotels?.hotels || [];
   const currency = hotelsResponse?.hotels?.hotels?.[0]?.currency || hotelsResponse?.currency;
