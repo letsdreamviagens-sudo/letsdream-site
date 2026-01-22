@@ -65,7 +65,27 @@ async function buscarHoteis(e){
   if (hint) hint.textContent = "Buscando...";
 
   // TESTE: NYC funciona (código destino). Depois mapeamos nomes.
-  const destination = city.toUpperCase();
+  // ===== Map: Nome da cidade -> Código Hotelbeds =====
+const DESTINATION_MAP = {
+  "ORLANDO": "ORL",
+  "NEW YORK": "NYC",
+  "NOVA YORK": "NYC",
+  "NYC": "NYC",
+  "MIAMI": "MIA",
+  "CANCUN": "CUN",
+  "CANCÚN": "CUN",
+  "CARIBE": "PUJ",     // exemplo: Punta Cana (ajustamos depois)
+  "PUNTA CANA": "PUJ",
+  "PARIS": "PAR",
+  "LONDRES": "LON",
+  "LONDON": "LON",
+  "RIO DE JANEIRO": "RIO",
+  "SÃO PAULO": "SAO",
+  "SAO PAULO": "SAO"
+};
+
+const cityKey = city.trim().toUpperCase();
+const destination = DESTINATION_MAP[cityKey] || cityKey;
 
   const url =
     `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}` +
