@@ -136,7 +136,6 @@ function renderHotels(hotelsResponse){
       toast("Hotel adicionado ao carrinho.");
     });
   });
-}
 
 function searchHotels(){
   const key = toKeyCity($("city").value);
