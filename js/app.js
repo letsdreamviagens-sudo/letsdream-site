@@ -435,7 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnTopo.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 });
 // ===== PAGAMENTO PAGSEGURO =====
-aasync function pagarPagSeguro() {
+async function pagarPagSeguro() {
   try {
     const response = await fetch("/.netlify/functions/pagbank-create-checkout", {
       method: "POST",
