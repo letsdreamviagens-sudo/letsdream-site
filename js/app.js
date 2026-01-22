@@ -98,6 +98,12 @@ const destination = DESTINATION_MAP[cityKey] || cityKey;
   const data = await r.json().catch(()=> ({}));
 
   console.log("HOTELBEDS:", data);
+  const list = document.getElementById("hotelsList");
+const hotels = data?.hotels?.hotels || [];
+
+list.innerHTML = hotels.length
+  ? hotels.map(h => `<div style="padding:10px;border:1px solid #ddd;margin:8px 0;border-radius:12px"><b>${h.name}</b><br>${h.zoneName || "-"}<br>${h.minRate}</div>`).join("")
+  : "<p>Nenhum hotel encontrado</p>";
 
   if (!r.ok){
     console.error("Erro Hotelbeds:", data);
