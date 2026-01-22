@@ -118,7 +118,7 @@ list.innerHTML = hotels.map(h => `
 
   renderHotels(data);
   document.getElementById("resultados")?.scrollIntoView?.({ behavior:"smooth" });
-}
+
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchForm")?.addEventListener("submit", buscarHoteis);
