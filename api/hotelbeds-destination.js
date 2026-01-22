@@ -16,8 +16,8 @@ export default async function handler(req, res) {
 
     // Content API: destinos (pode variar por conta, mas esse é o padrão)
     const url =
-      `${BASE}/hotel-content-api/1.0/locations/destinations` +
-      `?language=PT&fields=code,name,countryCode&from=1&to=1000`;
+  `${BASE}/hotel-content-api/1.0/locations/destinations` +
+  `?language=pt&fields=code,name,countryCode&from=1&to=1000`;
 
     const r = await fetch(url, {
       headers: {
