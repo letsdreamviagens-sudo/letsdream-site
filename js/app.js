@@ -95,19 +95,27 @@ const destination = DESTINATION_MAP[cityKey] || cityKey;
     `&children=${encodeURIComponent(children)}`;
 
   const r = await fetch(url);
-  const data = await r.json().catch(()=> ({}));
+const data = await r.json().catch(()=> ({}));
 
-  console.log("HOTELBEDS:", data);
-  
-list.innerHTML = hotels.length
-  ? hotels.map(h => `<div style="padding:10px;border:1px solid #ddd;margin:8px 0;border-radius:12px"><b>${h.name}</b><br>${h.zoneName || "-"}<br>${h.minRate}</div>`).join("")
-  : "<p>Nenhum hotel encontrado</p>";
+console.log("HOTELBEDS:", data);
 
-  if (!r.ok){
-    console.error("Erro Hotelbeds:", data);
-    if (list) list.innerHTML = `<p class="note">Erro na busca. Veja o Console (F12).</p>`;
-    if (hint) hint.textContent = "Erro";
-    return;
+const list = document.getElementById("hotelsList");
+const hotels = data?.hotels?.hotels || [];
+
+if (!list) return;
+
+if (!hotels.length) {
+  list.innerHTML = "<p class='note'>Nenhum hotel encontrado</p>";
+  return;
+}
+
+list.innerHTML = hotels.map(h => `
+  <div style="padding:12px;border:1px solid #ddd;margin:10px 0;border-radius:12px">
+    <b>${h.name}</b><br>
+    ${h.zoneName || "-"}<br>
+    <b>${h.minRate}</b>
+  </div>
+`).join("");
   }
 
   renderHotels(data);
