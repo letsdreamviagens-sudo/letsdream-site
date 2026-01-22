@@ -7,89 +7,39 @@ function sign(apiKey, secret) {
 
 export default async function handler(req, res) {
   try {
-    // CORS básico
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") return res.status(200).end();
+    const q = String(req.query.q || "").trim();
+    if (!q) return res.status(400).json({ error: "Faltou q (query)" });
 
-    const {
-      destination,
-      checkin,
-      checkout,
-      adults = "2",
-      children = "0",
-      childrenAges = ""
-    } = req.query;
+    const API_KEY = process.env.HOTELBEDS_API_KEY;
+    const SECRET = process.env.HOTELBEDS_SECRET;
+    const BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
 
-    if (!destination || !checkin || !checkout) {
-      return res.status(400).json({ error: "Faltou destination/checkin/checkout" });
-    }
-
-    const HOTELBEDS_API_KEY = process.env.HOTELBEDS_API_KEY;
-    const HOTELBEDS_SECRET = process.env.HOTELBEDS_SECRET;
-    const HOTELBEDS_BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
-
-    if (!HOTELBEDS_API_KEY || !HOTELBEDS_SECRET) {
-      return res.status(500).json({ error: "Env vars HOTELBEDS_API_KEY / HOTELBEDS_SECRET não configuradas" });
-    }
-
-    // Monta occupancies (adultos/crianças/idades)
-    const kids = parseInt(children || "0", 10);
-    const ages = String(childrenAges || "")
-      .split(",")
-      .map(s => parseInt(s.trim(), 10))
-      .filter(n => Number.isFinite(n));
-
-    // Se tem crianças, precisa mandar as idades
-    if (kids > 0 && ages.length !== kids) {
-      return res.status(400).json({ error: "childrenAges deve ter a mesma quantidade de idades que children (ex: 7,10)" });
-    }
-
-    const occupancy = {
-      rooms: 1,
-      adults: parseInt(adults || "2", 10),
-      children: kids,
-      paxes: [
-        ...Array.from({ length: parseInt(adults || "2", 10) }, () => ({ type: "AD" })),
-        ...ages.map(a => ({ type: "CH", age: a }))
-      ]
-    };
-
-    const payload = {
-      stay: { checkIn: checkin, checkOut: checkout },
-      occupancies: [occupancy],
-      destination: { code: destination }
-      // Se quiser limitar resultado:
-      // , filter: { maxHotels: 25 }
-    };
-
-    const url = `${HOTELBEDS_BASE}/hotel-api/1.0/hotels`;
+    // Content API: destinos (pode variar por conta, mas esse é o padrão)
+    const url =
+      `${BASE}/hotel-content-api/1.0/locations/destinations` +
+      `?language=PT&fields=code,name,countryCode&from=1&to=1000`;
 
     const r = await fetch(url, {
-      method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Api-key": HOTELBEDS_API_KEY,
-        "X-Signature": sign(HOTELBEDS_API_KEY, HOTELBEDS_SECRET),
-        Accept: "application/json"
-      },
-      body: JSON.stringify(payload)
+        "Api-key": API_KEY,
+        "X-Signature": sign(API_KEY, SECRET),
+        "Accept": "application/json",
+      }
     });
 
     const data = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(r.status).json({ error: "Erro Content API", details: data });
 
-    if (!r.ok) {
-      return res.status(r.status).json({
-        error: "Hotelbeds retornou erro",
-        status: r.status,
-        details: data
-      });
-    }
+    const list = data?.destinations || [];
+    const qUp = q.toUpperCase();
 
-    return res.status(200).json(data);
+    // tenta achar o melhor match
+    const matches = list
+      .filter(d => (d?.name || "").toUpperCase().includes(qUp))
+      .slice(0, 10);
+
+    return res.status(200).json({ q, matches });
   } catch (e) {
-    return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
+    return res.status(500).json({ error: String(e?.message || e) });
   }
 }
-
