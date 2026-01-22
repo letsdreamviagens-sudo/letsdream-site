@@ -75,12 +75,24 @@ function renderChildrenAges(){
   wrap.innerHTML = html;
 }
 
-function renderHotels(list){
-  const host = $("hotelsList");
-  if (!list.length){
-    host.innerHTML = `<div class="card"><b>Nenhuma opção encontrada</b><p class="note">Tente outra cidade (no modo demo temos algumas cidades cadastradas).</p></div>`;
+function renderHotels(hotelsResponse){
+  const list = document.getElementById("hotelsList");
+  if (!list) return;
+
+  const hotels = hotelsResponse?.hotels?.hotels || [];
+  if (!hotels.length){
+    list.innerHTML = "Nenhum hotel encontrado.";
     return;
   }
+
+  list.innerHTML = hotels.map(h => `
+    <div style="border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:12px">
+      <b>${h.name}</b><br>
+      Bairro: ${h.zoneName || "-"}<br>
+      Menor preço: ${h.currency || ""} ${h.minRate}
+    </div>
+  `).join("");
+}
 
   host.innerHTML = list.map(h => {
     const sel = (h.id === selectedHotelId) ? "selected" : "";
@@ -486,17 +498,23 @@ document.getElementById("searchForm").addEventListener("submit", async (e) => {
   const city = document.getElementById("city").value.trim();
   const checkin = document.getElementById("checkin").value;
   const checkout = document.getElementById("checkout").value;
-  const adults = document.getElementById("adults").value;
-  const children = document.getElementById("children").value;
 
-  const destination = city.toUpperCase();
+  const list = document.getElementById("hotelsList");
+  list.innerHTML = "Buscando hotéis...";
 
-  const url = `/api/hotelbeds-search?destination=${destination}&checkin=${checkin}&checkout=${checkout}&adults=${adults}&children=${children}`;
+  const url = `/api/hotelbeds-search?destination=${encodeURIComponent(city.toUpperCase())}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=2&children=0`;
 
   const r = await fetch(url);
   const data = await r.json();
 
-  renderHotels(data); // 👈 AQUI chama a função certa
+  console.log("RETORNO HOTELBEDS:", data); // <- ajuda a ver no console
+
+  if (!r.ok) {
+    list.innerHTML = "Erro ao buscar hotéis.";
+    return;
+  }
+
+  renderHotels(data); // <- ESSA LINHA é o principal
 });
 
   hotels.sort((a, b) => Number(a.minRate) - Number(b.minRate));
