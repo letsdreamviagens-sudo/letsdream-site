@@ -548,7 +548,8 @@ document.getElementById("searchForm").addEventListener("submit", async (e) => {
 
   if (!hotels.length){
     list.innerHTML = `<p class="note">Não encontramos hotéis para essa busca.</p>`;
-    return;}
+    return;
+  }
 
   list.innerHTML = hotels.map(h => {
     const bairro = h.zoneName ? h.zoneName : "—";
