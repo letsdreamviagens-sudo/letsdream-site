@@ -546,9 +546,11 @@ document.getElementById("searchForm").addEventListener("submit", async (e) => {
   // Ordena por minRate
   hotels.sort((a,b)=> toNumber(a.minRate) - toNumber(b.minRate));
 
-  if (!hotels.length){
-    list.innerHTML = `<p class="note">Não encontramos hotéis para essa busca.</p>`;
-    return; }
+ if (!hotels.length) {
+  list.innerHTML = `<p class="note">Não encontramos hotéis para essa busca.</p>`;
+  return;
+}
+
   list.innerHTML = hotels.map(h => {
     const bairro = h.zoneName ? h.zoneName : "—";
     const preco = formatPrice(h.minRate, h.currency || currency);
