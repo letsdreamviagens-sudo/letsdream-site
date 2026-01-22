@@ -6,11 +6,10 @@ function toNum(x){
 }
 
 function renderHotels(data){
-  const list = document.getElementById("hotelsList");
-  if (!list) return;
+    if (!list) return;
 
   const hotels = data?.hotels?.hotels || [];
-  const currency = data?.currency || hotels?.[0]?.currency || "EUR";
+  const currency = data?.currency || hotels?.[0]?.currency || "BRL";
 
   if (!hotels.length) {
     list.innerHTML = `<p class="note">Não encontramos hotéis para essa busca.</p>`;
@@ -58,8 +57,7 @@ async function buscarHoteis(e){
     return;
   }
 
-  const list = document.getElementById("hotelsList");
-  if (list) list.innerHTML = `<p class="note">Buscando hotéis...</p>`;
+    if (list) list.innerHTML = `<p class="note">Buscando hotéis...</p>`;
 
   const hint = document.getElementById("resultsHint");
   if (hint) hint.textContent = "Buscando...";
