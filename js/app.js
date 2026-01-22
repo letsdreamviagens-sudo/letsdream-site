@@ -469,7 +469,6 @@ if (!checkoutUrl) {
 }
 
 window.location.href = checkoutUrl;
-}
 function toNumber(x){
   const n = parseFloat(String(x).replace(",", "."));
   return Number.isFinite(n) ? n : 0;
