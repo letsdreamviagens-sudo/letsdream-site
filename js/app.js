@@ -38,6 +38,58 @@ function renderHotels(data){
     return;
   }
 
+  hotels.sort((a,b)=> toNum(a.minRate) - toNum(b.minRate));
+
+  const hint = document.getElementById("resultsHint");
+  if (hint) hint.textContent = `${hotels.length} hotéis`;
+
+  list.innerHTML = hotels.map(h => `
+    <article class="hotel">
+      <div class="img" style="background-image:url('img/orlando.jpg')"></div>
+
+      <div class="top">
+        <div>
+          <h3>${h.name}</h3>
+          <div class="meta">${h.zoneName || "-"} • ${h.destinationName || ""}</div>
+        </div>
+
+        <div class="price">
+          <small>Menor preço</small>
+          ${currency} ${toNum(h.minRate).toFixed(2)}
+        </div>
+      </div>
+
+      <div class="actions">
+        <button
+          class="btn btn-primary"
+          type="button"
+          data-add-hotel="1"
+          data-name="${escapeHtml(h.name)}"
+          data-zone="${escapeHtml(h.zoneName || "-")}"
+          data-dest="${escapeHtml(h.destinationName || "")}"
+          data-currency="${escapeHtml(currency)}"
+          data-price="${escapeHtml(String(h.minRate))}"
+        >
+          Selecionar
+        </button>
+      </div>
+    </article>
+  `).join("");
+
+  // liga clique nos botões "Selecionar"
+  list.querySelectorAll("[data-add-hotel]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      addHotelToCart({
+        name: btn.dataset.name,
+        zone: btn.dataset.zone,
+        dest: btn.dataset.dest,
+        currency: btn.dataset.currency,
+        price: btn.dataset.price
+      });
+    });
+  });
+}
+
   // Ordena por menor preço
   hotels.sort((a,b)=> toNum(a.minRate) - toNum(b.minRate));
 
