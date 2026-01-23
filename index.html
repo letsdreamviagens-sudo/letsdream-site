@@ -344,5 +344,33 @@
   <button id="btnTopo" type="button" title="Voltar ao topo">↑</button>
 
   <script src="js/app.js"></script>
+  <!-- ===== CARRINHO ===== -->
+<section id="carrinho" style="margin:20px 0; padding:16px; border-top:1px solid #ddd;">
+  <h2>Carrinho</h2>
+
+  <div id="cartItems">
+    <p class="note">Seu carrinho está vazio.</p>
+  </div>
+
+  <p style="margin-top:10px;">
+    <b>Total:</b> <span id="cartTotal">R$ 0</span>
+  </p>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+    <button id="btnOrcamento" type="button">
+      Solicitar orçamento (WhatsApp)
+    </button>
+
+    <button id="btnLimpar" type="button">
+      Limpar carrinho
+    </button>
+  </div>
+
+  <p style="margin-top:10px; font-size:12px; opacity:.7;">
+    Valores exibidos são apenas orçamentos e podem variar na confirmação.
+  </p>
+</section>
+<!-- ===== FIM CARRINHO ===== -->
+
 </body>
 </html>
