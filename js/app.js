@@ -149,17 +149,18 @@ function renderHotels(data){
 
       <div class="actions">
         <button
-          class="btn btn-primary"
-          type="button"
-          data-add-hotel="1"
-          data-name="${escapeHtml(h.name)}"
-          data-zone="${escapeHtml(h.zoneName || "-")}"
-          data-dest="${escapeHtml(h.destinationName || "")}"
-          data-currency="${escapeHtml(currency)}"
-          data-price="${escapeHtml(String(h.minRate))}"
-        >
-          Selecionar
-        </button>
+  class="btn btn-primary"
+  type="button"
+  data-add-hotel="1"
+  data-name="${h.name}"
+  data-zone="${h.zoneName || ''}"
+  data-dest="${h.destinationName || ''}"
+  data-currency="${currency}"
+  data-price="${h.minRate}"
+>
+  Selecionar
+</button>
+     
       </div>
     </article>
   `).join("");
