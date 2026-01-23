@@ -72,7 +72,7 @@ if (!checkin || !checkout || (!destination && !(lat && lng))) {
 
 // destino por código OU por GPS
 if (destination) {
-  payload.destination = destination;
+  payload.destination = { code: destination };
 } else {
   payload.geolocation = {
     latitude: Number(lat),
@@ -110,5 +110,6 @@ if (destination) {
     return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
   }
 }
+
 
 
