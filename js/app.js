@@ -90,33 +90,7 @@ function renderHotels(data){
   });
 }
 
-  // Ordena por menor preço
-  hotels.sort((a,b)=> toNum(a.minRate) - toNum(b.minRate));
-
-  const hint = document.getElementById("resultsHint");
-  if (hint) hint.textContent = `${hotels.length} hotéis`;
-
-  list.innerHTML = hotels.map(h => `
-    <article class="hotel">
-      <div class="img" style="background-image:url('img/orlando.jpg')"></div>
-
-      <div class="top">
-        <div>
-          <h3>${h.name}</h3>
-          <div class="meta">${h.zoneName || "-"} • ${h.destinationName || ""}</div>
-        </div>
-
-        <div class="price">
-          <small>Menor preço</small>
-          ${currency} ${toNum(h.minRate).toFixed(2)}
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn btn-primary" type="button">Selecionar</button>
-      </div>
-    </article>
-  `).join("");
+  
     
 
 async function buscarHoteis(e){
