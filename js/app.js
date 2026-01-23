@@ -185,3 +185,110 @@ if (mapped && typeof mapped === "object") {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchForm")?.addEventListener("submit", buscarHoteis);
 });
+// ===== Carrinho (Hotel) + Orçamento WhatsApp =====
+
+const cart = []; // itens: {type, name, zone, dest, currency, price, qty}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function addHotelToCart(hotel){
+  const key = `HOTEL|${hotel.name}|${hotel.zone}`;
+  const existing = cart.find(x => x.key === key);
+  if (existing) existing.qty += 1;
+  else cart.push({ key, type:"Hotel", ...hotel, qty: 1 });
+
+  renderCart();
+  document.getElementById("carrinho")?.scrollIntoView?.({ behavior:"smooth" });
+}
+
+function clearCart(){
+  cart.length = 0;
+  renderCart();
+}
+
+function cartTotal(){
+  // Hotelbeds retorna "minRate" como texto; vamos tratar como número
+  const toN = (v) => Number(String(v ?? "").replace(",", "."));
+  return cart.reduce((sum, it) => sum + (toN(it.price) * it.qty), 0);
+}
+
+function renderCart(){
+  const wrap = document.getElementById("cartItems");
+  const totalEl = document.getElementById("cartTotal");
+
+  if (!wrap || !totalEl) return;
+
+  if (!cart.length){
+    wrap.innerHTML = `<p class="note">Seu carrinho está vazio.</p>`;
+    totalEl.textContent = "R$ 0";
+    return;
+  }
+
+  wrap.innerHTML = cart.map((it, idx) => `
+    <div style="border:1px solid rgba(0,0,0,.12); border-radius:12px; padding:10px; margin:10px 0;">
+      <b>${escapeHtml(it.type)}:</b> ${escapeHtml(it.name)}<br>
+      <small style="opacity:.8;">${escapeHtml(it.zone)} • ${escapeHtml(it.dest)}</small><br>
+      <small><b>${escapeHtml(it.currency)}</b> ${escapeHtml(it.price)} (x${it.qty})</small>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" data-dec="${idx}">-</button>
+        <button type="button" data-inc="${idx}">+</button>
+        <button type="button" data-rem="${idx}">Remover</button>
+      </div>
+    </div>
+  `).join("");
+
+  wrap.querySelectorAll("[data-dec]").forEach(b => b.addEventListener("click", () => {
+    const i = Number(b.dataset.dec);
+    cart[i].qty = Math.max(1, cart[i].qty - 1);
+    renderCart();
+  }));
+  wrap.querySelectorAll("[data-inc]").forEach(b => b.addEventListener("click", () => {
+    const i = Number(b.dataset.inc);
+    cart[i].qty += 1;
+    renderCart();
+  }));
+  wrap.querySelectorAll("[data-rem]").forEach(b => b.addEventListener("click", () => {
+    const i = Number(b.dataset.rem);
+    cart.splice(i, 1);
+    renderCart();
+  }));
+
+  totalEl.textContent = `R$ ${cartTotal().toLocaleString("pt-BR")}`;
+}
+
+function solicitarOrcamentoWhatsApp(){
+  const numero = "5511989811183"; // atendimento
+
+  const linhas = cart.length
+    ? cart.map(it => `- ${it.type}: ${it.name} (${it.zone} • ${it.dest}) x${it.qty} — ${it.currency} ${it.price}`).join("\n")
+    : "- (sem itens)";
+
+  const msg =
+`Olá! Gostaria de solicitar um orçamento.
+
+Itens selecionados:
+${linhas}
+
+Total estimado (referência): R$ ${cartTotal().toLocaleString("pt-BR")}
+
+*Valores são apenas orçamentos e podem variar no momento da confirmação.*
+E-mail de contato: atendimento@letsdreamviagens.com.br
+`;
+
+  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+// liga botões do carrinho (se existirem)
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("btnLimpar")?.addEventListener("click", clearCart);
+  document.getElementById("btnOrcamento")?.addEventListener("click", solicitarOrcamentoWhatsApp);
+  renderCart();
+});
+
