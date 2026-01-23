@@ -358,4 +358,3 @@ document.addEventListener("DOMContentLoaded", () => {
 // expõe para onclick no HTML
 window.openCart = openCart;
 window.closeCart = closeCart;
-
