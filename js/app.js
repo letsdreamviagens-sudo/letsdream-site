@@ -160,8 +160,7 @@ function renderHotels(data){
 >
   Selecionar
 </button>
-     
-      </div>
+           </div>
     </article>
   `).join("");
 
@@ -179,8 +178,6 @@ function renderHotels(data){
   });
 }
 
-  
-    
 
 async function buscarHoteis(e){
   e?.preventDefault?.();
