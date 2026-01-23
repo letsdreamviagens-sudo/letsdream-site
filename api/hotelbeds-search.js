@@ -62,12 +62,25 @@ if (!checkin || !checkout || (!destination && !(lat && lng))) {
     };
 
     const payload = {
-      stay: { checkIn: checkin, checkOut: checkout },
-      occupancies: [occupancy],
-      destination: { code: destination }
-      // Se quiser limitar resultado:
-      // , filter: { maxHotels: 25 }
-    };
+  stay: { checkIn: checkin, checkOut: checkout },
+  occupancies: [{
+    rooms: 1,
+    adults: Number(adults || 2),
+    children: Number(children || 0)
+  }]
+};
+
+// destino por código OU por GPS
+if (destination) {
+  payload.destination = destination;
+} else {
+  payload.geolocation = {
+    latitude: Number(lat),
+    longitude: Number(lng),
+    radius: Number(radius),
+    unit: "km"
+  };
+}
 
     const url = `${HOTELBEDS_BASE}/hotel-api/1.0/hotels`;
 
@@ -97,4 +110,5 @@ if (!checkin || !checkout || (!destination && !(lat && lng))) {
     return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
   }
 }
+
 
