@@ -91,7 +91,7 @@ function renderHotels(data){
 }
 
   // Ordena por menor preço
-  hotels.sort((a,b)=> toNum(a.minRate) - toNum(b.minRate));
+  hotels.sort((a,b)=> toNum(a.minRate) - toNum(b.minRate)); {
 
   const hint = document.getElementById("resultsHint");
   if (hint) hint.textContent = `${hotels.length} hotéis`;
@@ -117,6 +117,7 @@ function renderHotels(data){
       </div>
     </article>
   `).join("");
+    }
 
 async function buscarHoteis(e){
   e?.preventDefault?.();
