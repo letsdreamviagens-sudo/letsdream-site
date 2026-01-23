@@ -7,7 +7,7 @@ function toNum(x){
 
 // ===== Map: Nome da cidade -> Código Hotelbeds =====
 const DESTINATION_MAP = {
-  "ORLANDO": "ORL",
+  "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 },
   "NEW YORK": "NYC",
   "NOVA YORK": "NYC",
   "NYC": "NYC",
@@ -90,15 +90,28 @@ async function buscarHoteis(e){
 
   // converte nome -> código
   const cityKey = city.toUpperCase();
-  const destination = DESTINATION_MAP[cityKey] || cityKey;
+const mapped = DESTINATION_MAP[cityKey];
 
-  const url =
+let url = "";
+
+if (mapped && typeof mapped === "object") {
+  url =
+    `/api/hotelbeds-search?lat=${encodeURIComponent(mapped.lat)}` +
+    `&lng=${encodeURIComponent(mapped.lng)}` +
+    `&radius=${encodeURIComponent(mapped.radius || 35)}` +
+    `&checkin=${encodeURIComponent(checkin)}` +
+    `&checkout=${encodeURIComponent(checkout)}` +
+    `&adults=${encodeURIComponent(adults)}` +
+    `&children=${encodeURIComponent(children)}`;
+} else {
+  const destination = mapped || cityKey;
+  url =
     `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}` +
     `&checkin=${encodeURIComponent(checkin)}` +
     `&checkout=${encodeURIComponent(checkout)}` +
     `&adults=${encodeURIComponent(adults)}` +
     `&children=${encodeURIComponent(children)}`;
-
+}
   const r = await fetch(url);
   const data = await r.json().catch(()=> ({}));
 
