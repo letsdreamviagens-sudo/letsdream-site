@@ -1,25 +1,42 @@
-LET’S DREAM — SITE LIMPO (Netlify Manual Deploy)
+# Let’s Dream Viagens (Vercel)
 
-PASTA:
-- index.html
-- css/style.css
-- js/app.js
-- img/logo.png + imagens de exemplo (orlando.jpg, caribe.jpg, brasil.jpg)
+Este projeto já vem completo com:
+- Busca de hotéis via Hotelbeds (`/api/hotelbeds-search`)
+- Lista de resultados + botão **Selecionar**
+- Carrinho (salvo no navegador) + WhatsApp orçamento
+- Checkout PagBank (`/api/pagbank-checkout`) com redirecionamento
 
-COMO SUBIR NO NETLIFY:
-1) Abra o Netlify e vá em Deploys
-2) Arraste a PASTA inteira (a pasta que contém o index.html)
-3) Ele publica e você abre o link.
+## Estrutura (IMPORTANTÍSSIMO)
+No GitHub a estrutura tem que ficar ASSIM (as pastas na RAIZ do repositório):
+- `index.html`
+- `style.css`
+- `js/` (frontend)
+- `img/` (imagens)
+- `api/` (APIs do Vercel — serverless functions)
+- `vercel.json`
 
-TROCAR IMAGENS:
-- Substitua os arquivos em /img mantendo os nomes:
-  orlando.jpg, caribe.jpg, brasil.jpg
-- Para trocar logo: /img/logo.png
+Se você colocar `api/` dentro de `js/`, o Vercel NÃO cria as APIs e vai dar **404**.
 
-ATENDIMENTO:
-- WhatsApp: (11) 98981-1183 (já configurado)
-- E-mail: atendimento@letsdreamviagens.com.br (já configurado)
+## Variáveis de ambiente no Vercel
+No Vercel: Project → Settings → Environment Variables
 
-PRÓXIMOS PASSOS:
-- Plugar Hotelbeds: trocar DEMO_HOTELS em js/app.js por resultados da API.
-- Plugar pagamento: PagSeguro/Mercado Pago após confirmação da reserva.
+### Hotelbeds
+- `HOTELBEDS_API_KEY`
+- `HOTELBEDS_SECRET`
+- `HOTELBEDS_BASE_URL` (opcional)  
+  - teste: `https://api.test.hotelbeds.com`  
+  - produção: `https://api.hotelbeds.com`
+
+### PagBank
+- `PAGBANK_TOKEN`
+- `PAGBANK_API_URL` (opcional)  
+  - sandbox: `https://sandbox.api.pagseguro.com`
+  - produção: `https://api.pagbank.com.br` (ou o que o PagBank informar no seu painel)
+
+## Testes
+- Hotelbeds: faça uma busca por **NYC** (ou “New York”).
+- Orlando: digite **ORLANDO** (usa lat/lng por padrão).
+- Carrinho: clique em **Selecionar**.
+- PagBank: clique em **Finalizar** (id `payBtn`).
+
+Se der erro, abra F12 → Console e veja `HOTELBEDS:` e `PAGBANK:`.
