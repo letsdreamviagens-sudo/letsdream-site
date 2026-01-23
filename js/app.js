@@ -1,4 +1,92 @@
 // ===== Let’s Dream: Busca Hotelbeds + Render (limpo) =====
+// =====================
+// CARRINHO (STATE)
+// =====================
+let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+function saveCart() {
+  localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+function money(currency, value) {
+  const n = Number(value) || 0;
+  try {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(n);
+  } catch {
+    return `${currency} ${n.toFixed(2)}`;
+  }
+}
+
+function cartTotal() {
+  return cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+}
+
+function updateCartBadge() {
+  const el = document.getElementById("cartCount");
+  if (!el) return;
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  el.textContent = String(count);
+}
+
+function renderCart() {
+  const list = document.getElementById("cartItems");
+  const totalEl = document.getElementById("cartTotal");
+  if (!list || !totalEl) return;
+
+  if (!cart.length) {
+    list.innerHTML = `<p class="note">Seu carrinho está vazio.</p>`;
+    totalEl.textContent = money("BRL", 0);
+    updateCartBadge();
+    return;
+  }
+
+  list.innerHTML = cart.map((item, idx) => `
+    <div class="cart-item" style="display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border:1px solid #eee;border-radius:12px;margin:10px 0">
+      <div style="flex:1">
+        <b>${item.name}</b><br>
+        <small>${item.place || ""}</small>
+      </div>
+
+      <div style="min-width:140px;text-align:right">
+        <div>${money(item.currency, item.price)}</div>
+        <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:6px">
+          <button type="button" class="btn" data-cart-action="dec" data-idx="${idx}">-</button>
+          <b>${item.qty}</b>
+          <button type="button" class="btn" data-cart-action="inc" data-idx="${idx}">+</button>
+          <button type="button" class="btn" data-cart-action="remove" data-idx="${idx}">Remover</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  totalEl.textContent = money(cart[0]?.currency || "BRL", cartTotal());
+  updateCartBadge();
+}
+
+function addToCart(hotel) {
+  // hotel: {code, name, minRate, currency, zoneName, destinationName}
+  const code = String(hotel.code);
+  const price = Number(String(hotel.minRate).replace(",", ".")) || 0;
+  const currency = hotel.currency || "EUR";
+
+  const existing = cart.find(i => i.code === code);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    cart.push({
+      code,
+      name: hotel.name,
+      price,
+      currency,
+      place: `${hotel.zoneName || "-"} • ${hotel.destinationName || ""}`,
+      qty: 1
+    });
+  }
+
+  saveCart();
+  renderCart();
+}
+
 
 function toNum(x){
   const n = Number(String(x ?? "").replace(",", "."));
