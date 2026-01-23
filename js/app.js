@@ -117,7 +117,6 @@ function renderHotels(data){
       </div>
     </article>
   `).join("");
-}
 
 async function buscarHoteis(e){
   e?.preventDefault?.();
