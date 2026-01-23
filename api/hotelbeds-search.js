@@ -14,17 +14,22 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(200).end();
 
     const {
-      destination,
-      checkin,
-      checkout,
-      adults = "2",
-      children = "0",
-      childrenAges = ""
-    } = req.query;
+  destination,
+  lat,
+  lng,
+  radius = "35",
+  checkin,
+  checkout,
+  adults = "2",
+  children = "0",
+  childrenAges = ""
+} = req.query;
 
-    if (!destination || !checkin || !checkout) {
-      return res.status(400).json({ error: "Faltou destination/checkin/checkout" });
-    }
+if (!checkin || !checkout || (!destination && !(lat && lng))) {
+  return res.status(400).json({
+    error: "Faltou destination OU lat/lng, e também checkin/checkout"
+  });
+}
 
     const HOTELBEDS_API_KEY = process.env.HOTELBEDS_API_KEY;
     const HOTELBEDS_SECRET = process.env.HOTELBEDS_SECRET;
@@ -92,3 +97,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
   }
 }
+
