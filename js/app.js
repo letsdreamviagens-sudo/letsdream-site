@@ -340,3 +340,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderCart();
 });
+// =====================
+// ABRIR / FECHAR CARRINHO (DRAWER)
+// =====================
+function openCart() {
+  document.getElementById("backdrop")?.classList.add("show");
+  document.getElementById("drawer")?.classList.add("open");
+}
+
+function closeCart() {
+  document.getElementById("drawer")?.classList.remove("open");
+  document.getElementById("backdrop")?.classList.remove("show");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("openCartBtn")?.addEventListener("click", openCart);
+  document.getElementById("closeDrawer")?.addEventListener("click", closeCart);
+
+  // clicar no fundo fecha
+  document.getElementById("backdrop")?.addEventListener("click", closeCart);
+
+  // ESC fecha
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeCart();
+  });
+});
+
