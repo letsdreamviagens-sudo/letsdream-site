@@ -273,106 +273,60 @@ Total estimado (referência): ${cart.length ? (cart[0].currency + " " + cartTota
 *Valores são apenas orçamentos e podem variar no momento da confirmação.*
 E-mail de contato: atendimento@letsdreamviagens.com.br
 `;
-
   window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 }
-
-// ===== PagBank checkout (server will return checkoutUrl) =====
 async function pagarComPagBank() {
-  if (!cart.length) {
-    alert("Seu carrinho está vazio.");
-    return;
-  }
-
-  // ⚠️ PagBank precisa de valores em CENTAVOS (inteiro) e geralmente BRL.
-  // Aqui eu vou montar itens com unit_amount em centavos.
-  // Se seus preços estiverem em "EUR" do Hotelbeds, você precisa converter para BRL antes de cobrar.
-  const items = cart.map((it, idx) => {
-    const qty = Number(it.qty || 1);
-
-    // Ex: se it.price for "123.45" -> 12345 centavos
-    const value = Number(String(it.price).replace(",", "."));
-    const cents = Math.round((Number.isFinite(value) ? value : 0) * 100);
-
-    return {
-      reference_id: String(it.code || idx + 1),
-      name: it.name || "Hotel",
-      quantity: qty,
-      unit_amount: cents,
-    };
-  });
-
-  const payload = {
-    reference_id: `LETS-${Date.now()}`,
-    customer: {
-      name: "Cliente",
-      email: "cliente@email.com",
-    },
-    items,
-    redirect_url: window.location.origin, // opcional
-  };
-
-  const r = await fetch("/api/pagbank-checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  const data = await r.json().catch(() => ({}));
-  console.log("PAGBANK:", data);
-
-  if (!r.ok) {
-    console.error("Erro PagBank:", data);
-    alert("Erro no PagBank. Veja o console (F12).");
-    return;
-  }
-
-  window.location.href = data.checkoutUrl;
-}
-
-
-  // Minimal customer data (you can add fields later)
-  const payload = {
-    reference_id: `LETS-${Date.now()}`,
-    customer: {
-      name: "Cliente",
-      email: "cliente@email.com"
-    },
-    items: cart.map((it, idx) => ({
-      reference_id: it.code || String(idx + 1),
-      name: it.name,
-      quantity: it.qty || 1,
-      // PagBank expects integer in cents in many APIs; our server function will normalize
-      unit_amount: toNum(it.price),
-      currency: it.currency || "EUR",
-    })),
-    // optional metadata
-    meta: {
-      total: cartTotal(),
-      currency: cart[0]?.currency || "EUR",
+  try {
+    if (!cart || !cart.length) {
+      alert("Seu carrinho está vazio.");
+      return;
     }
-  };
 
-  const r = await fetch("/api/pagbank-checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+    const items = cart.map((it, idx) => {
+      const qty = Number(it.qty || 1);
 
-  const data = await r.json().catch(() => ({}));
-  console.log("PAGBANK:", data);
+      // preço em centavos
+      const value = Number(String(it.price).replace(",", "."));
+      const cents = Math.round((Number.isFinite(value) ? value : 0) * 100);
 
-  if (!r.ok) {
-    alert("Erro ao iniciar pagamento. Veja o console (F12).");
-    return;
+      return {
+        reference_id: String(it.code || idx + 1),
+        name: String(it.name || "Hotel"),
+        quantity: qty,
+        unit_amount: cents,
+      };
+    });
+
+    const payload = {
+      reference_id: `LETS-${Date.now()}`,
+      customer: {
+        name: "Cliente",
+        email: "cliente@email.com",
+      },
+      items,
+      redirect_url: window.location.origin,
+    };
+
+    const r = await fetch("/api/pagbank-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await r.json().catch(() => ({}));
+    console.log("PAGBANK:", data);
+
+    if (!r.ok) {
+      console.error("Erro PagBank:", data);
+      alert("Erro no PagBank. Veja o console (F12).");
+      return;
+    }
+
+    window.location.href = data.checkoutUrl;
+  } catch (err) {
+    console.error("Erro JS PagBank:", err);
+    alert("Erro no JavaScript. Veja o console (F12).");
   }
-
-  if (!data.checkoutUrl) {
-    alert("Checkout URL não retornada. Veja o console (F12).");
-    return;
-  }
-
-  window.location.href = data.checkoutUrl;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
