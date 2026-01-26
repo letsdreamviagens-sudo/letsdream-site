@@ -284,6 +284,53 @@ async function pagarComPagBank() {
     return;
   }
 
+  // ⚠️ PagBank precisa de valores em CENTAVOS (inteiro) e geralmente BRL.
+  // Aqui eu vou montar itens com unit_amount em centavos.
+  // Se seus preços estiverem em "EUR" do Hotelbeds, você precisa converter para BRL antes de cobrar.
+  const items = cart.map((it, idx) => {
+    const qty = Number(it.qty || 1);
+
+    // Ex: se it.price for "123.45" -> 12345 centavos
+    const value = Number(String(it.price).replace(",", "."));
+    const cents = Math.round((Number.isFinite(value) ? value : 0) * 100);
+
+    return {
+      reference_id: String(it.code || idx + 1),
+      name: it.name || "Hotel",
+      quantity: qty,
+      unit_amount: cents,
+    };
+  });
+
+  const payload = {
+    reference_id: `LETS-${Date.now()}`,
+    customer: {
+      name: "Cliente",
+      email: "cliente@email.com",
+    },
+    items,
+    redirect_url: window.location.origin, // opcional
+  };
+
+  const r = await fetch("/api/pagbank-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await r.json().catch(() => ({}));
+  console.log("PAGBANK:", data);
+
+  if (!r.ok) {
+    console.error("Erro PagBank:", data);
+    alert("Erro no PagBank. Veja o console (F12).");
+    return;
+  }
+
+  window.location.href = data.checkoutUrl;
+}
+
+
   // Minimal customer data (you can add fields later)
   const payload = {
     reference_id: `LETS-${Date.now()}`,
