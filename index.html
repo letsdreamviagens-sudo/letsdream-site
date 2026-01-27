@@ -324,7 +324,28 @@
   <div class="drawer-foot">
     <button class="btn btn-outline" type="button" id="clearCartBtn">Limpar</button>
     <button class="btn btn-secondary" type="button" id="whatsBtn">Enviar WhatsApp</button>
-    <button class="btn btn-primary" type="button" id="payBtn">Pagar com PagBank</button>
+   <form
+  id="pagbankForm"
+  action="https://pagseguro.uol.com.br/v2/checkout/payment.html"
+  method="post"
+  onsubmit="return prepararPagamentoPagBank()"
+>
+  <!-- email da sua conta PagBank -->
+  <input type="hidden" name="receiverEmail" value="SEU_EMAIL_PAGBANK@EMAIL.COM">
+
+  <input type="hidden" name="currency" value="BRL">
+
+  <!-- dados do item (preenchidos via JS) -->
+  <input type="hidden" name="itemId1" id="pg_itemId">
+  <input type="hidden" name="itemDescription1" id="pg_itemDesc">
+  <input type="hidden" name="itemAmount1" id="pg_itemAmount">
+  <input type="hidden" name="itemQuantity1" id="pg_itemQty">
+
+  <button type="submit" class="btn btn-primary">
+    Pagar com PagBank
+  </button>
+</form>
+
   </div>
 </aside>
 
