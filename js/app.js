@@ -307,11 +307,43 @@ async function pagarComPagBank() {
       redirect_url: window.location.origin,
     };
 
-    const r = await fetch("/api/pagbank-checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    function pagarComPagBankForm() {
+  // usa o seu carrinho (cart)
+  if (!cart || !cart.length) {
+    alert("Seu carrinho está vazio.");
+    return;
+  }
+
+  // ⚠️ AQUI você coloca seu e-mail cadastrado no PagBank/PagSeguro
+  const receiverEmail = "Atendimento@letsdreamviagens.com.br";
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "https://pagseguro.uol.com.br/v2/checkout/payment.html";
+
+  // campos obrigatórios
+  const inputs = [];
+  inputs.push(`<input type="hidden" name="receiverEmail" value="${receiverEmail}">`);
+  inputs.push(`<input type="hidden" name="currency" value="BRL">`);
+
+  // itens do carrinho
+  cart.forEach((item, i) => {
+    const idx = i + 1;
+    const price = Number(String(item.price).replace(",", "."));
+    const amount = (Number.isFinite(price) ? price : 0).toFixed(2);
+    const qty = Number(item.qty || 1);
+
+    inputs.push(`<input type="hidden" name="itemId${idx}" value="${idx}">`);
+    inputs.push(`<input type="hidden" name="itemDescription${idx}" value="${String(item.name || "Item")}">`);
+    inputs.push(`<input type="hidden" name="itemAmount${idx}" value="${amount}">`);
+    inputs.push(`<input type="hidden" name="itemQuantity${idx}" value="${qty}">`);
+  });
+
+  form.innerHTML = inputs.join("\n");
+  document.body.appendChild(form);
+  form.submit();
+}
+
 
     const data = await r.json().catch(() => ({}));
     console.log("PAGBANK:", data);
