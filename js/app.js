@@ -11,8 +11,7 @@
   const PAGBANK_RECEIVER_EMAIL = (window.__PAGBANK_RECEIVER_EMAIL || "atendimento@letsdreamviagens.com.br").trim();
 
   // Opção C (Formulário HTML)
-  const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/checkout/v2/cart.html?action=add";
-
+ const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/v2/checkout/payment.html";
   // =====================
   // UTIL
   // =====================
