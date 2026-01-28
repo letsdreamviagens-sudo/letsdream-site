@@ -324,26 +324,14 @@
   <div class="drawer-foot">
     <button class="btn btn-outline" type="button" id="clearCartBtn">Limpar</button>
     <button class="btn btn-secondary" type="button" id="whatsBtn">Enviar WhatsApp</button>
-   <form
-  id="pagbankForm"
-  action="https://pagseguro.uol.com.br/v2/checkout/payment.html"
-  method="post"
-  onsubmit="return prepararPagamentoPagBank()"
->
-  <!-- email da sua conta PagBank -->
+  <!-- PAGBANK (Opção C - Formulário HTML) -->
+<form id="pagbankForm"
+      method="post"
+      action="https://pagseguro.uol.com.br/checkout/v2/cart.html?action=add"
+      style="display:none;">
+  <!-- Seu e-mail da conta PagBank que vai receber -->
   <input type="hidden" name="receiverEmail" value="Atendimento@letsdreamviagens.com.br">
-
   <input type="hidden" name="currency" value="BRL">
-
-  <!-- dados do item (preenchidos via JS) -->
-  <input type="hidden" name="itemId1" id="pg_itemId">
-  <input type="hidden" name="itemDescription1" id="pg_itemDesc">
-  <input type="hidden" name="itemAmount1" id="pg_itemAmount">
-  <input type="hidden" name="itemQuantity1" id="pg_itemQty">
-
-  <button type="submit" class="btn btn-primary">
-    Pagar com PagBank
-  </button>
 </form>
 
   </div>
