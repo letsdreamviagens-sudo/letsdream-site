@@ -11,7 +11,9 @@
   const PAGBANK_RECEIVER_EMAIL = (window.__PAGBANK_RECEIVER_EMAIL || "atendimento@letsdreamviagens.com.br").trim();
 
   // Opção C (Formulário HTML)
- const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/v2/checkout/payment.html";
+ const PAGBANK_FORM_ACTION =
+   "https://pagseguro.uol.com.br/v2/checkout/payment.html";
+
   // =====================
   // UTIL
   // =====================
@@ -359,43 +361,40 @@ E-mail de contato: atendimento@letsdreamviagens.com.br
   // PagBank Opção C (FORMULÁRIO) — À prova de erro
   // =====================
   function pagarComPagBankFormulario() {
-    if (!cart.length) {
-      alert("Seu carrinho está vazio.");
-      return;
-    }
-
-    if (!PAGBANK_RECEIVER_EMAIL || !PAGBANK_RECEIVER_EMAIL.includes("@")) {
-      alert("receiverEmail do PagBank inválido. Confira o e-mail no app.js.");
-      return;
-    }
-
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = PAGBANK_FORM_ACTION;
-    form.acceptCharset = "UTF-8";
-    form.style.display = "none";
-
-    // obrigatórios
-    form.appendChild(hidden("receiverEmail", PAGBANK_RECEIVER_EMAIL));
-    form.appendChild(hidden("currency", "BRL"));
-
-    // itens obrigatórios (Evita Erro 130/140/155/165)
-    cart.forEach((item, i) => {
-      const idx = i + 1;
-      const qty = String(Number(item.qty || 1));
-      const amount = String(toNum(item.priceBRL).toFixed(2)); // "199.27"
-      const desc = String(item.name || "Item").slice(0, 100);
-
-      form.appendChild(hidden(`itemId${idx}`, String(item.code || idx)));
-      form.appendChild(hidden(`itemDescription${idx}`, desc));
-      form.appendChild(hidden(`itemAmount${idx}`, amount));
-      form.appendChild(hidden(`itemQuantity${idx}`, qty));
-    });
-
-    document.body.appendChild(form);
-    form.submit();
+  if (!cart.length) {
+    alert("Seu carrinho está vazio.");
+    return;
   }
 
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "https://pagseguro.uol.com.br/v2/checkout/payment.html";
+  form.acceptCharset = "UTF-8";
+
+  // Campos obrigatórios
+  const inputs = [];
+  inputs.push(`<input type="hidden" name="receiverEmail" value="${PAGBANK_RECEIVER_EMAIL}">`);
+  inputs.push(`<input type="hidden" name="currency" value="BRL">`);
+
+  // Itens do carrinho
+  cart.forEach((item, i) => {
+    const idx = i + 1;
+    const qty = Number(item.qty || 1);
+
+    // ⚠️ valor NUMÉRICO, ponto decimal, SEM R$
+    const amount = Number(item.priceBRL).toFixed(2);
+
+    inputs.push(`<input type="hidden" name="itemId${idx}" value="${idx}">`);
+    inputs.push(`<input type="hidden" name="itemDescription${idx}" value="${escapeHtml(item.name)}">`);
+    inputs.push(`<input type="hidden" name="itemAmount${idx}" value="${amount}">`);
+    inputs.push(`<input type="hidden" name="itemQuantity${idx}" value="${qty}">`);
+  });
+
+  form.innerHTML = inputs.join("\n");
+  document.body.appendChild(form);
+  form.submit();
+}
+ 
   function hidden(name, value) {
     const input = document.createElement("input");
     input.type = "hidden";
