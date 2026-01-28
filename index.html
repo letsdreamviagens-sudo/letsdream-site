@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
@@ -14,136 +14,207 @@
       --letsblue:#83acde;
       --letsyellow:#fcd961;
       --letsorange:#dd5a07;
+
       --bg:#ffffff;
       --text:#0f172a;
       --muted:#64748b;
-      --border:rgba(15,23,42,.10);
+      --border:rgba(15,23,42,.12);
       --card:#ffffff;
-      --soft:rgba(131,172,222,.12);
-      --shadow: 0 12px 34px rgba(15,23,42,.10);
-      --radius: 20px;
+      --shadow: 0 10px 30px rgba(15,23,42,.10);
+      --radius: 18px;
     }
     *{ box-sizing:border-box; }
     html{ scroll-behavior:smooth; }
-    body{ margin:0; font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
-    a{ color:inherit; }
-    .wrap{ max-width:1080px; margin:0 auto; padding:0 18px; }
+    body{
+      margin:0;
+      font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{ max-width:1100px; margin:0 auto; padding:0 18px; }
 
-    header{ position:sticky; top:0; background:rgba(255,255,255,.78); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); z-index:50; }
-    .nav{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; gap:12px; }
-    .brand{ display:flex; align-items:center; gap:12px; text-decoration:none; font-weight:800; letter-spacing:.2px; }
-    .brand img{ height:44px; width:auto; border-radius:14px; box-shadow:0 8px 20px rgba(0,0,0,.08); background:#fff; }
-    .brand .name span{ color:var(--letsblue); }
-    .navlinks{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:14px; color:rgba(15,23,42,.78); }
-    .navlinks a{ text-decoration:none; padding:10px 12px; border-radius:14px; }
-    .navlinks a:hover{ background:rgba(131,172,222,.12); }
-    @media (max-width: 900px){ .navlinks{ display:none; } }
-
-    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:12px 16px; border-radius:16px; border:0; cursor:pointer; font-weight:900; text-decoration:none; transition:transform .06s ease, opacity .2s ease; user-select:none; white-space:nowrap; }
+    header{
+      position:sticky; top:0; z-index:50;
+      background:rgba(255,255,255,.86);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 0; gap:12px;
+    }
+    .brand{
+      display:flex; gap:12px; align-items:center;
+      text-decoration:none; color:inherit; font-weight:900;
+    }
+    .brand img{
+      height:44px; width:auto; border-radius:14px; background:#fff;
+      box-shadow:0 8px 20px rgba(0,0,0,.08);
+    }
+    .brand span{ color:var(--letsblue); }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:12px 16px; border-radius:16px; border:0; cursor:pointer;
+      font-weight:900; text-decoration:none; user-select:none;
+      transition:transform .06s ease, opacity .2s ease;
+    }
     .btn:active{ transform:translateY(1px); }
     .btn-primary{ background:var(--letsblue); color:#fff; }
     .btn-secondary{ background:var(--letsyellow); color:#111827; }
     .btn-outline{ background:transparent; border:2px solid rgba(221,90,7,.35); color:var(--letsorange); }
-    .btn-ghost{ background:rgba(131,172,222,.12); color:rgba(15,23,42,.90); }
+    .btn-ghost{ background:rgba(131,172,222,.14); color:rgba(15,23,42,.90); }
 
-    .cart-btn{ display:inline-flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:16px; padding:10px 12px; cursor:pointer; font-weight:900; }
-    .badge{ min-width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; background:var(--letsorange); color:#fff; border-radius:999px; font-size:12px; font-weight:900; padding:0 7px; }
+    .cart-btn{
+      display:inline-flex; align-items:center; gap:10px;
+      background:#fff; border:1px solid var(--border);
+      border-radius:16px; padding:10px 12px; cursor:pointer;
+      font-weight:900;
+    }
+    .badge{
+      min-width:22px; height:22px; display:inline-flex;
+      align-items:center; justify-content:center;
+      background:var(--letsorange); color:#fff;
+      border-radius:999px; font-size:12px; font-weight:900;
+      padding:0 7px;
+    }
 
-    .hero{ padding:34px 0 18px;
+    .hero{
+      padding:26px 0 10px;
       background:
         radial-gradient(1200px 500px at 20% 0%, rgba(131,172,222,.28), transparent 60%),
         radial-gradient(900px 420px at 85% 10%, rgba(252,217,97,.22), transparent 55%),
         linear-gradient(180deg, rgba(131,172,222,.10), transparent 70%);
       border-bottom:1px solid var(--border);
     }
-    .hero-grid{ display:grid; grid-template-columns:1.2fr .8fr; gap:18px; align-items:stretch; }
-    @media (max-width: 900px){ .hero-grid{ grid-template-columns:1fr; } }
+    .grid2{
+      display:grid; grid-template-columns: 1.15fr .85fr; gap:14px; align-items:start;
+    }
+    @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } }
 
-    .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px; }
-    .pill{ display:inline-flex; align-items:center; gap:10px; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.85); border:1px solid var(--border); font-weight:900; font-size:12px; color:rgba(15,23,42,.78); }
-    .dot{ width:10px; height:10px; border-radius:999px; background:var(--letsorange); }
-    h1{ margin:14px 0 10px; font-size:44px; line-height:1.05; letter-spacing:-.6px; }
-    @media (max-width:520px){ h1{ font-size:34px; } }
-    .sub{ color:var(--muted); font-size:16px; line-height:1.5; margin:0 0 16px; }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    h1{ margin:0 0 8px; font-size:34px; letter-spacing:-.6px; }
+    .sub{ margin:0; color:var(--muted); line-height:1.5; }
 
-    .mini{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; margin-top:14px; }
-    @media (max-width:520px){ .mini{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
-    .mini .box{ border:1px solid var(--border); border-radius:18px; padding:12px; background:rgba(255,255,255,.82); }
-    .mini .box b{ display:block; }
-    .mini .box span{ color:var(--muted); font-size:12px; }
+    .form{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr 1fr .7fr .7fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width:900px){ .form{ grid-template-columns:1fr 1fr; } }
+    .field label{
+      display:block; font-size:12px; font-weight:900;
+      color:rgba(15,23,42,.72); margin:2px 0 6px;
+    }
+    .field input, .field select{
+      width:100%; padding:12px 12px;
+      border-radius:16px; border:1px solid var(--border);
+      outline:none; font-family:inherit; font-weight:800;
+      background:rgba(255,255,255,.95);
+    }
+    .field input:focus, .field select:focus{
+      border-color:rgba(131,172,222,.7);
+      box-shadow:0 0 0 4px rgba(131,172,222,.18);
+    }
+    .note{ color:var(--muted); font-size:12px; line-height:1.5; }
+    section{ padding:18px 0; }
 
-    section{ padding:26px 0; }
-    .section-title{ display:flex; align-items:end; justify-content:space-between; gap:12px; margin:6px 0 14px; }
-    .section-title h2{ margin:0; font-size:22px; letter-spacing:-.2px; }
+    .section-title{
+      display:flex; align-items:end; justify-content:space-between; gap:12px;
+      margin:0 0 12px;
+    }
+    .section-title h2{ margin:0; font-size:20px; letter-spacing:-.2px; }
     .hint{ color:var(--muted); font-size:12px; }
 
-    .form{ display:grid; grid-template-columns: 1.2fr 1fr 1fr .8fr .8fr; gap:10px; }
-    @media (max-width:900px){ .form{ grid-template-columns:1fr 1fr; } }
-    .field label{ display:block; font-size:12px; font-weight:900; color:rgba(15,23,42,.72); margin:2px 0 6px; }
-    .field input, .field select{
-      width:100%; padding:12px 12px; border-radius:16px; border:1px solid var(--border);
-      outline:none; font-family:inherit; font-weight:800; background:rgba(255,255,255,.92);
-    }
-    .field input:focus, .field select:focus{ border-color:rgba(131,172,222,.7); box-shadow:0 0 0 4px rgba(131,172,222,.18); }
-
-    .blog-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
-    @media (max-width:900px){ .blog-grid{ grid-template-columns:1fr; } }
-    .tile{ border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:#fff; box-shadow:0 8px 22px rgba(15,23,42,.06); }
-    .tile .img{ height:220px; background:#f3f4f6 center/cover no-repeat; }
-    .tile .body{ padding:16px; }
-
     .list{ display:grid; grid-template-columns:1fr; gap:12px; }
-    .hotel{ border:1px solid var(--border); background:#fff; border-radius:var(--radius); box-shadow:0 8px 22px rgba(15,23,42,.06); overflow:hidden; display:flex; flex-direction:column; }
+    .hotel{
+      border:1px solid var(--border);
+      background:#fff; border-radius:var(--radius);
+      box-shadow:0 8px 22px rgba(15,23,42,.06);
+      overflow:hidden;
+    }
     .hotel .img{ height:170px; background:#f3f4f6 center/cover no-repeat; }
-    .hotel .top{ padding:14px 14px 10px; display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .hotel .top{
+      padding:14px;
+      display:flex; justify-content:space-between; gap:12px; align-items:flex-start;
+    }
     .hotel h3{ margin:0; font-size:16px; letter-spacing:-.2px; }
     .hotel .meta{ color:var(--muted); font-size:12px; margin-top:6px; }
-    .price{ text-align:right; font-weight:900; color:var(--letsblue); min-width:170px; }
+    .price{
+      text-align:right; font-weight:900; color:var(--letsblue);
+      min-width:150px;
+    }
     .price small{ display:block; font-size:11px; color:rgba(15,23,42,.55); font-weight:900; margin-bottom:4px; }
-    .actions{ padding: 0 14px 14px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-
-    .note{ margin-top:10px; color:var(--muted); font-size:12px; line-height:1.5; }
+    .actions{ padding:0 14px 14px; display:flex; justify-content:flex-end; }
 
     /* Drawer */
-    .backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:80; }
+    .backdrop{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.35);
+      display:none; z-index:80;
+    }
+    .backdrop.show{ display:block; }
     .drawer{
-      position:fixed; top:0; right:0; height:100%; width:min(420px, 92vw);
-      background:#fff; border-left:1px solid var(--border);
+      position:fixed; top:0; right:0; height:100%;
+      width:min(440px, 92vw);
+      background:#fff;
+      border-left:1px solid var(--border);
       box-shadow:-10px 0 30px rgba(0,0,0,.12);
-      transform:translateX(110%); transition:transform .22s ease;
-      z-index:90; display:flex; flex-direction:column;
+      transform:translateX(110%);
+      transition:transform .22s ease;
+      z-index:90;
+      display:flex; flex-direction:column;
     }
     .drawer.open{ transform:translateX(0); }
-    .backdrop.show{ display:block; }
-    .drawer-head{ padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .drawer-head{
+      padding:16px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
     .drawer-body{ padding:16px; overflow:auto; }
-    .drawer-foot{ padding:16px; border-top:1px solid var(--border); display:flex; gap:10px; flex-wrap:wrap; }
-    .divider{ height:1px; background:var(--border); margin:14px 0; }
+    .drawer-foot{
+      padding:16px;
+      border-top:1px solid var(--border);
+      display:flex; flex-wrap:wrap; gap:10px;
+    }
+    .total-line{
+      display:flex; justify-content:space-between; align-items:center;
+      gap:10px; margin-top:10px; padding-top:10px;
+      border-top:1px solid var(--border);
+      font-weight:900;
+    }
 
-    footer{ border-top:1px solid var(--border); padding:18px 0; color:var(--muted); font-size:13px; margin-top:18px; }
+    footer{
+      border-top:1px solid var(--border);
+      padding:16px 0;
+      color:var(--muted);
+      font-size:13px;
+      margin-top:10px;
+    }
     footer a{ color:var(--letsblue); font-weight:900; text-decoration:none; }
     footer a:hover{ text-decoration:underline; }
   </style>
 </head>
 
 <body>
+
 <header>
   <div class="wrap">
     <div class="nav">
-      <a class="brand" href="#topo">
+      <a class="brand" href="#">
         <img src="logo.png" alt="Logo Let’s Dream" />
-        <div class="name"><span>Let’s</span> Dream</div>
+        <div><span>Let’s</span> Dream</div>
       </a>
 
-      <div class="navlinks">
-        <a href="#buscar">Buscar hotéis</a>
-        <a href="#blog">Inspirações</a>
-        <a href="#resultados">Resultados</a>
-      </div>
-
-      <div style="display:flex; align-items:center; gap:10px;">
-        <a class="btn btn-secondary" href="mailto:atendimento@letsdreamviagens.com.br">Atendimento</a>
-        <button class="cart-btn" type="button" id="openCartBtn">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <a class="btn btn-ghost" href="mailto:atendimento@letsdreamviagens.com.br">E-mail</a>
+        <button class="cart-btn" id="openCartBtn" type="button">
           Carrinho <span id="cartCount" class="badge">0</span>
         </button>
       </div>
@@ -151,47 +222,36 @@
   </div>
 </header>
 
-<div id="topo" class="hero">
+<div class="hero">
   <div class="wrap">
-    <div class="hero-grid">
+    <div class="grid2">
+
       <div class="card">
-        <div class="pill"><span class="dot"></span> Let’s Dream Viagens</div>
         <h1>Nosso sonho é tornar seu sonho realidade.</h1>
         <p class="sub">Viagens em família com planejamento perfeito — sem dor de cabeça.</p>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <a class="btn btn-primary" href="#buscar">Buscar hotéis</a>
-          <a class="btn btn-outline" href="#blog">Ver inspirações</a>
-        </div>
-
-        <div class="mini">
-          <div class="box"><b>Família</b><span>roteiro com crianças</span></div>
-          <div class="box"><b>Suporte</b><span>antes e depois</span></div>
-          <div class="box"><b>Pix / Cartão</b><span>PagBank (checkout)</span></div>
-        </div>
+        <p class="note" style="margin-top:10px;">*Valores exibidos são somente orçamentos e podem variar até a confirmação.</p>
       </div>
 
       <div class="card" id="buscar">
-        <div class="section-title" style="margin:0 0 10px;">
-          <h2 style="font-size:18px;">Buscar hotéis</h2>
-          <div class="hint">Hotelbeds (via API no servidor)</div>
+        <div class="section-title" style="margin-bottom:6px;">
+          <h2>Buscar hotéis</h2>
+          <div class="hint">Hotelbeds</div>
         </div>
 
         <form id="searchForm">
           <div class="form">
             <div class="field">
               <label>Cidade</label>
-              <input id="city" list="cities" placeholder="Ex: Orlando, Nova York, Miami, Cancún" required />
+              <input id="city" list="cities" placeholder="Ex: NYC, Orlando, Miami, Cancún" required />
               <datalist id="cities">
+                <option value="NYC"></option>
                 <option value="Orlando"></option>
-                <option value="Nova York"></option>
                 <option value="Miami"></option>
                 <option value="Cancún"></option>
                 <option value="Punta Cana"></option>
                 <option value="Paris"></option>
                 <option value="Londres"></option>
               </datalist>
-              <div class="note">Digite o nome da cidade. Se não encontrar, testando: NYC.</div>
             </div>
 
             <div class="field">
@@ -207,136 +267,94 @@
             <div class="field">
               <label>Adultos</label>
               <select id="adults">
-                <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option>
+                <option>1</option><option selected>2</option><option>3</option><option>4</option>
               </select>
             </div>
 
             <div class="field">
               <label>Crianças</label>
               <select id="children">
-                <option selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+                <option selected>0</option><option>1</option><option>2</option><option>3</option>
               </select>
             </div>
           </div>
 
-          <div style="margin-top:12px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+          <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
             <button class="btn btn-primary" type="submit">Pesquisar</button>
-            <button class="btn btn-ghost" type="button" id="clearBtn">Limpar</button>
+            <button class="btn btn-outline" type="button" id="clearSearchBtn">Limpar</button>
           </div>
         </form>
-
-        <div class="note">
-          * Valores exibidos são <b>orçamentos</b> e podem variar até a confirmação da reserva.
-        </div>
       </div>
+
     </div>
   </div>
 </div>
 
-<section id="blog">
-  <div class="wrap">
-    <div class="section-title">
-      <h2>Inspirações & Dicas</h2>
-      <div class="hint">estilo blog • com fotos</div>
-    </div>
-
-    <div class="blog-grid">
-      <article class="tile">
-        <div class="img" style="background-image:url('img/orlando.svg');"></div>
-        <div class="body">
-          <div class="pill"><span class="dot"></span> Orlando em família</div>
-          <p class="sub" style="margin:10px 0 0;">Melhores regiões para ficar e dicas práticas para ir com crianças.</p>
-        </div>
-      </article>
-
-      <article class="tile">
-        <div class="img" style="background-image:url('img/caribe.svg');"></div>
-        <div class="body">
-          <div class="pill"><span class="dot"></span> Caribe: resorts</div>
-          <p class="sub" style="margin:10px 0 0;">Como escolher resort bom para família sem dor de cabeça.</p>
-        </div>
-      </article>
-
-      <article class="tile">
-        <div class="img" style="background-image:url('img/brasil.svg');"></div>
-        <div class="body">
-          <div class="pill"><span class="dot"></span> Brasil: resorts</div>
-          <p class="sub" style="margin:10px 0 0;">Top destinos para descansar e curtir com as crianças.</p>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
 <section id="resultados">
   <div class="wrap">
     <div class="section-title">
-      <h2>Resultados (menor preço primeiro)</h2>
-      <div class="hint" id="resultsHint">Pesquise acima para ver opções</div>
+      <h2>Resultados</h2>
+      <div class="hint" id="resultsHint">Pesquise acima</div>
     </div>
 
     <div id="hotelsList" class="list"></div>
 
-    <div class="note">
-      * Os valores são <b>orçamentos</b> e podem sofrer variação por disponibilidade e regras do fornecedor.
-    </div>
+    <p class="note" style="margin-top:10px;">
+      * Os valores são somente orçamentos e podem variar por disponibilidade, regras do fornecedor e taxas.
+    </p>
   </div>
 </section>
 
 <footer>
-  <div class="wrap" style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+  <div class="wrap" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;">
     <div>© Let’s Dream Viagens</div>
-    <div>Atendimento: <a href="mailto:atendimento@letsdreamviagens.com.br">atendimento@letsdreamviagens.com.br</a> • <a href="https://wa.me/5511989811183" target="_blank" rel="noopener">WhatsApp (11) 98981-1183</a></div>
+    <div>Atendimento: <b>(11) 98981-1183</b> • <a href="mailto:atendimento@letsdreamviagens.com.br">atendimento@letsdreamviagens.com.br</a></div>
   </div>
 </footer>
 
-<!-- Drawer carrinho -->
+<!-- ===== DRAWER CARRINHO ===== -->
 <div id="backdrop" class="backdrop"></div>
-<aside id="drawer" class="drawer" aria-hidden="true">
+
+<aside id="drawer" class="drawer" aria-label="Carrinho">
   <div class="drawer-head">
-    <b>Seu carrinho</b>
-    <button class="btn btn-ghost" type="button" id="closeCartBtn">Fechar</button>
+    <div style="font-weight:900;">Seu carrinho</div>
+    <button class="btn btn-ghost" id="closeDrawer" type="button">Fechar</button>
   </div>
 
   <div class="drawer-body">
-    <div class="field">
-      <label>Cotação (EUR → BRL) para cálculo do checkout</label>
-      <input id="eurBrl" type="number" step="0.01" value="6.00" />
-      <div class="note">Hotelbeds geralmente retorna preços em EUR. Para cobrar no PagBank, usamos BRL com essa cotação (você pode ajustar).</div>
-    </div>
-
-    <div class="divider"></div>
-
     <div id="cartItems"></div>
 
-    <div class="divider"></div>
-
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-      <b>Total estimado</b>
-      <span id="cartTotal" style="font-weight:900;">R$ 0,00</span>
+    <div class="total-line">
+      <span>Total</span>
+      <span id="cartTotal">R$ 0,00</span>
     </div>
 
     <p class="note" style="margin-top:10px;">
-      Valores são apenas orçamentos e podem variar no momento da confirmação. Juros/parcelamento seguem regras do PagBank.
+      * Valores são orçamentos e podem variar na confirmação.
     </p>
   </div>
 
   <div class="drawer-foot">
-    <button class="btn btn-outline" type="button" id="clearCartBtn">Limpar</button>
-    <button class="btn btn-secondary" type="button" id="whatsBtn">Enviar WhatsApp</button>
-  <!-- PAGBANK (Opção C - Formulário HTML) -->
-<form id="pagbankForm"
-      method="post"
-      action="https://pagseguro.uol.com.br/checkout/v2/cart.html?action=add"
-      style="display:none;">
-  <!-- Seu e-mail da conta PagBank que vai receber -->
-  <input type="hidden" name="receiverEmail" value="Atendimento@letsdreamviagens.com.br">
-  <input type="hidden" name="currency" value="BRL">
-</form>
-
+    <button class="btn btn-outline" type="button" id="clearCartBtn">Limpar carrinho</button>
+    <button class="btn btn-secondary" type="button" id="whatsappBtn">Enviar no WhatsApp</button>
+    <button class="btn btn-primary" type="button" id="payBtn">Pagar no PagBank</button>
   </div>
 </aside>
 
+<script>
+  // Limpar busca (só UI)
+  document.getElementById("clearSearchBtn")?.addEventListener("click", () => {
+    document.getElementById("city").value = "";
+    document.getElementById("checkin").value = "";
+    document.getElementById("checkout").value = "";
+    document.getElementById("adults").value = "2";
+    document.getElementById("children").value = "0";
+    document.getElementById("hotelsList").innerHTML = "";
+    document.getElementById("resultsHint").textContent = "Pesquise acima";
+  });
+</script>
+
+<!-- IMPORTANTE: ajuste o caminho para o seu app.js -->
 <script src="js/app.js"></script>
 </body>
 </html>
