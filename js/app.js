@@ -307,10 +307,10 @@ async function pagarComPagBank() {
       redirect_url: window.location.origin,
     };
 
-    function pagarComPagBankForm() {
-  // usa o seu carrinho (cart)
-  if (!cart || !cart.length) {
-    alert("Seu carrinho está vazio.");
+    function pagarComPagBankFormulario() {
+  const form = document.getElementById("pagbankForm");
+  if (!form) {
+    alert("Form do PagBank não encontrado no index.html (id=pagbankForm).");
     return;
   }
 
