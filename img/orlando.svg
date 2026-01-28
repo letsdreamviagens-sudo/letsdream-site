@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
-<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#83acde" stop-opacity="0.25"/><stop offset="1" stop-color="#ffffff" stop-opacity="1"/></linearGradient></defs>
-<rect width="100%" height="100%" fill="url(#g)"/>
-<text x="60" y="140" font-family="Arial" font-size="72" font-weight="700" fill="#0f172a">Orlando</text>
-<text x="60" y="220" font-family="Arial" font-size="32" fill="#334155">Imagem placeholder — troque depois</text>
-</svg>
