@@ -314,8 +314,11 @@ async function pagarComPagBank() {
     return;
   }
 
-  // ⚠️ AQUI você coloca seu e-mail cadastrado no PagBank/PagSeguro
-  const receiverEmail = "Atendimento@letsdreamviagens.com.br";
+  // ===== PAGBANK (Opção C - Formulário HTML) =====
+const PAGBANK_RECEIVER_EMAIL = "Atendimento@letsdreamviagens.com.br";
+
+// URL do formulário (Opção C). Se der erro, eu te passo a alternativa.
+const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/checkout/v2/cart.html?action=add";
 
   const form = document.createElement("form");
   form.method = "POST";
