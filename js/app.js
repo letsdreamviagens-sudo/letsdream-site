@@ -1,36 +1,64 @@
 
-// Let’s Dream Viagens — Frontend (Hotels + Cart + PagBank) for Vercel
+// Let’s Dream Viagens — Frontend (Hotels + Cart + PagBank Form) for Vercel
 // Requires:
 // - /api/hotelbeds-search (serverless function)
-// - /api/pagbank-checkout (serverless function)
+// NOTE: PagBank aqui é OPÇÃO C (FORM HTML). NÃO usa /api/pagbank-checkout.
 
 const STORAGE_KEY = "letsdream_cart_v1";
 
+// ====== CONFIG PAGBANK (OPÇÃO C - FORM HTML) ======
+const PAGBANK_RECEIVER_EMAIL = "atendimento@letsdreamviagens.com.br";
+
+// URL do checkout por formulário (Opção C)
+// Se o PagBank não abrir com essa, trocamos para a alternativa abaixo.
+const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/v2/checkout/payment.html";
+// Alternativa (se precisar):
+// const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/checkout/v2/cart.html?action=add";
+
 function loadCart() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
-  catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 function saveCart(cart) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
 }
+
 let cart = loadCart(); // items: { key, code, name, place, currency, price, qty }
 
 function toNum(x) {
   const n = Number(String(x ?? "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
 }
+
 function money(currency, value) {
   const n = toNum(value);
-  try { return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(n); }
-  catch { return `${currency} ${n.toFixed(2)}`; }
+  try {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(n);
+  } catch {
+    return `${currency} ${n.toFixed(2)}`;
+  }
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function cartCount() {
   return cart.reduce((s, it) => s + (it.qty || 0), 0);
 }
+
 function cartTotal() {
   return cart.reduce((s, it) => s + toNum(it.price) * (it.qty || 1), 0);
 }
+
 function updateCartBadge() {
   const el = document.getElementById("cartCount");
   if (el) el.textContent = String(cartCount());
@@ -48,7 +76,9 @@ function renderCart() {
     return;
   }
 
-  wrap.innerHTML = cart.map((it, idx) => `
+  wrap.innerHTML = cart
+    .map(
+      (it, idx) => `
     <div class="cart-item" style="display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border:1px solid rgba(0,0,0,.12);border-radius:12px;margin:10px 0">
       <div style="flex:1">
         <b>${escapeHtml(it.name)}</b><br>
@@ -64,43 +94,46 @@ function renderCart() {
         </div>
       </div>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 
-  wrap.querySelectorAll("[data-dec]").forEach(btn => btn.addEventListener("click", () => {
-    const i = Number(btn.dataset.dec);
-    cart[i].qty = Math.max(1, (cart[i].qty || 1) - 1);
-    saveCart(cart); renderCart();
-  }));
-  wrap.querySelectorAll("[data-inc]").forEach(btn => btn.addEventListener("click", () => {
-    const i = Number(btn.dataset.inc);
-    cart[i].qty = (cart[i].qty || 1) + 1;
-    saveCart(cart); renderCart();
-  }));
-  wrap.querySelectorAll("[data-rem]").forEach(btn => btn.addEventListener("click", () => {
-    const i = Number(btn.dataset.rem);
-    cart.splice(i, 1);
-    saveCart(cart); renderCart();
-  }));
+  wrap.querySelectorAll("[data-dec]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.dec);
+      cart[i].qty = Math.max(1, (cart[i].qty || 1) - 1);
+      saveCart(cart);
+      renderCart();
+    })
+  );
 
-  // The cart can be in EUR; total in the cart currency is shown for reference
+  wrap.querySelectorAll("[data-inc]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.inc);
+      cart[i].qty = (cart[i].qty || 1) + 1;
+      saveCart(cart);
+      renderCart();
+    })
+  );
+
+  wrap.querySelectorAll("[data-rem]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.rem);
+      cart.splice(i, 1);
+      saveCart(cart);
+      renderCart();
+    })
+  );
+
   totalEl.textContent = money(cart[0]?.currency || "EUR", cartTotal());
   updateCartBadge();
-}
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
 }
 
 function addHotelToCart(h) {
   // h: { code, name, minRate, currency, zoneName, destinationName }
   const code = String(h.code ?? h.name ?? "");
   const key = `HOTEL|${code}`;
-  const existing = cart.find(it => it.key === key);
+  const existing = cart.find((it) => it.key === key);
 
   const item = {
     key,
@@ -136,8 +169,6 @@ const DESTINATION_MAP = {
   "RIO DE JANEIRO": "RIO",
   "SÃO PAULO": "SAO",
   "SAO PAULO": "SAO",
-
-  // Orlando: use lat/lng (because "ORL" may not be a valid destination code in your Hotelbeds setup)
   "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 },
 };
 
@@ -149,7 +180,7 @@ function buildHotelsApiUrl({ city, checkin, checkout, adults, children }) {
     return `/api/hotelbeds-search?lat=${encodeURIComponent(mapped.lat)}&lng=${encodeURIComponent(mapped.lng)}&radius=${encodeURIComponent(mapped.radius || 35)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
   }
 
-  const destination = mapped || cityKey; // fallback: let user type destination code
+  const destination = mapped || cityKey;
   return `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
 }
 
@@ -170,7 +201,9 @@ function renderHotels(data) {
 
   hotels.sort((a, b) => toNum(a.minRate) - toNum(b.minRate));
 
-  list.innerHTML = hotels.map(h => `
+  list.innerHTML = hotels
+    .map(
+      (h) => `
     <article class="hotel">
       <div class="img" style="background-image:url('img/orlando.jpg')"></div>
 
@@ -193,16 +226,18 @@ function renderHotels(data) {
           data-add-hotel="1"
           data-code="${escapeHtml(h.code)}"
           data-name="${escapeHtml(h.name)}"
-          data-zone="${escapeHtml(h.zoneName || '')}"
-          data-dest="${escapeHtml(h.destinationName || '')}"
+          data-zone="${escapeHtml(h.zoneName || "")}"
+          data-dest="${escapeHtml(h.destinationName || "")}"
           data-currency="${escapeHtml(currency)}"
           data-price="${escapeHtml(h.minRate)}"
         >Selecionar</button>
       </div>
     </article>
-  `).join("");
+  `
+    )
+    .join("");
 
-  list.querySelectorAll("[data-add-hotel]").forEach(btn => {
+  list.querySelectorAll("[data-add-hotel]").forEach((btn) => {
     btn.addEventListener("click", () => {
       addHotelToCart({
         code: btn.dataset.code,
@@ -256,126 +291,73 @@ async function buscarHoteis(e) {
 
 // ===== WhatsApp quote =====
 function solicitarOrcamentoWhatsApp() {
-  const numero = "5511989811183"; // atendimento (troque se quiser)
+  const numero = "5511989811183";
 
   const linhas = cart.length
-    ? cart.map(it => `- Hotel: ${it.name} (${it.place}) x${it.qty} — ${it.currency} ${toNum(it.price).toFixed(2)}`).join("\n")
+    ? cart
+        .map(
+          (it) =>
+            `- Hotel: ${it.name} (${it.place}) x${it.qty} — ${it.currency} ${toNum(it.price).toFixed(2)}`
+        )
+        .join("\n")
     : "- (sem itens)";
 
-  const msg =
-`Olá! Gostaria de solicitar um orçamento.
+  const msg = `Olá! Gostaria de solicitar um orçamento.
 
 Itens selecionados:
 ${linhas}
 
-Total estimado (referência): ${cart.length ? (cart[0].currency + " " + cartTotal().toFixed(2)) : "0"}
+Total estimado (referência): ${
+    cart.length ? cart[0].currency + " " + cartTotal().toFixed(2) : "0"
+  }
 
 *Valores são apenas orçamentos e podem variar no momento da confirmação.*
 E-mail de contato: atendimento@letsdreamviagens.com.br
 `;
+
   window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 }
-async function pagarComPagBank() {
-  try {
-    if (!cart || !cart.length) {
-      alert("Seu carrinho está vazio.");
-      return;
-    }
 
-    const items = cart.map((it, idx) => {
-      const qty = Number(it.qty || 1);
-
-      // preço em centavos
-      const value = Number(String(it.price).replace(",", "."));
-      const cents = Math.round((Number.isFinite(value) ? value : 0) * 100);
-
-      return {
-        reference_id: String(it.code || idx + 1),
-        name: String(it.name || "Hotel"),
-        quantity: qty,
-        unit_amount: cents,
-      };
-    });
-
-    const payload = {
-      reference_id: `LETS-${Date.now()}`,
-      customer: {
-        name: "Cliente",
-        email: "cliente@email.com",
-      },
-      items,
-      redirect_url: window.location.origin,
-    };
-
-    function pagarComPagBankFormulario() {
-  const form = document.getElementById("pagbankForm");
-  if (!form) {
-    alert("Form do PagBank não encontrado no index.html (id=pagbankForm).");
+// ===== PAGBANK OPÇÃO C (FORM HTML) =====
+function pagarComPagBankFormulario() {
+  if (!cart || !cart.length) {
+    alert("Seu carrinho está vazio.");
     return;
   }
 
-  // ===== PAGBANK (Opção C - Formulário HTML) =====
-const PAGBANK_RECEIVER_EMAIL = "Atendimento@letsdreamviagens.com.br";
+  // Cria um form e envia
+  const payForm = document.createElement("form");
+  payForm.method = "POST";
+  payForm.action = PAGBANK_FORM_ACTION;
 
-// URL do formulário (Opção C). Se der erro, eu te passo a alternativa.
-const PAGBANK_FORM_ACTION = "https://pagseguro.uol.com.br/checkout/v2/cart.html?action=add";
+  const addHidden = (name, value) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = String(value ?? "");
+    payForm.appendChild(input);
+  };
 
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "https://pagseguro.uol.com.br/v2/checkout/payment.html";
+  addHidden("receiverEmail", PAGBANK_RECEIVER_EMAIL);
+  addHidden("currency", "BRL");
+  addHidden("reference", `LETS-${Date.now()}`);
 
-  // campos obrigatórios
-  const inputs = [];
-  inputs.push(`<input type="hidden" name="receiverEmail" value="${receiverEmail}">`);
-  inputs.push(`<input type="hidden" name="currency" value="BRL">`);
-
-  // itens do carrinho
   cart.forEach((item, i) => {
     const idx = i + 1;
-    const price = Number(String(item.price).replace(",", "."));
-    const amount = (Number.isFinite(price) ? price : 0).toFixed(2);
-    const qty = Number(item.qty || 1);
+    const price = toNum(item.price);
+    const amount = price.toFixed(2); // BRL 0.00
+    const qty = Math.max(1, Number(item.qty || 1));
 
-    inputs.push(`<input type="hidden" name="itemId${idx}" value="${idx}">`);
-    inputs.push(`<input type="hidden" name="itemDescription${idx}" value="${String(item.name || "Item")}">`);
-    inputs.push(`<input type="hidden" name="itemAmount${idx}" value="${amount}">`);
-    inputs.push(`<input type="hidden" name="itemQuantity${idx}" value="${qty}">`);
+    addHidden(`itemId${idx}`, item.code || `${idx}`);
+    addHidden(`itemDescription${idx}`, item.name || "Item");
+    addHidden(`itemAmount${idx}`, amount);
+    addHidden(`itemQuantity${idx}`, qty);
   });
 
-  form.innerHTML = inputs.join("\n");
-  document.body.appendChild(form);
-  form.submit();
+  document.body.appendChild(payForm);
+  payForm.submit();
 }
 
-
-    const data = await r.json().catch(() => ({}));
-    console.log("PAGBANK:", data);
-
-    if (!r.ok) {
-      console.error("Erro PagBank:", data);
-      alert("Erro no PagBank. Veja o console (F12).");
-      return;
-    }
-
-    window.location.href = data.checkoutUrl;
-  } catch (err) {
-    console.error("Erro JS PagBank:", err);
-    alert("Erro no JavaScript. Veja o console (F12).");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("searchForm")?.addEventListener("submit", buscarHoteis);
-  document.getElementById("whatsappBtn")?.addEventListener("click", solicitarOrcamentoWhatsApp);
-  document.getElementById("clearCartBtn")?.addEventListener("click", () => {
-    cart = [];
-    saveCart(cart);
-    renderCart();
-  });
-  document.getElementById("payBtn")?.addEventListener("click", pagarComPagBank);
-
-  renderCart();
-});
 // =====================
 // ABRIR / FECHAR CARRINHO (DRAWER)
 // =====================
@@ -383,22 +365,32 @@ function openCart() {
   document.getElementById("backdrop")?.classList.add("show");
   document.getElementById("drawer")?.classList.add("open");
 }
-
 function closeCart() {
   document.getElementById("drawer")?.classList.remove("open");
   document.getElementById("backdrop")?.classList.remove("show");
 }
 
+// ===== INIT =====
 document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("searchForm")?.addEventListener("submit", buscarHoteis);
+  document.getElementById("whatsappBtn")?.addEventListener("click", solicitarOrcamentoWhatsApp);
+
+  document.getElementById("clearCartBtn")?.addEventListener("click", () => {
+    cart = [];
+    saveCart(cart);
+    renderCart();
+  });
+
+  // Botão do PagBank (Opção C)
+  document.getElementById("payBtn")?.addEventListener("click", pagarComPagBankFormulario);
+
+  // Drawer
   document.getElementById("openCartBtn")?.addEventListener("click", openCart);
   document.getElementById("closeDrawer")?.addEventListener("click", closeCart);
-
-  // clicar no fundo fecha
   document.getElementById("backdrop")?.addEventListener("click", closeCart);
-
-  // ESC fecha
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeCart();
   });
-});
 
+  renderCart();
+});
