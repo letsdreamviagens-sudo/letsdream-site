@@ -127,6 +127,13 @@ async function main() {
   if (!hotelCode || !checkin || !checkout) {
     document.getElementById("ratesWrap").textContent = "Faltam parâmetros na URL (hotelCode/checkin/checkout).";
     return;
+    // HERO image (placeholder por destino)
+const dest = (hotel.destinationName || "").toLowerCase();
+let img = "/img/hotel-placeholder.jpg";
+if (dest.includes("orlando")) img = "/img/orlando.jpg";
+if (dest.includes("sao paulo") || dest.includes("são paulo")) img = "/img/saopaulo.jpg";
+const hero = document.getElementById("heroImg");
+if (hero) hero.style.backgroundImage = `url('${img}')`;
   }
 
   document.getElementById("hotelName").textContent = name || `Hotel ${hotelCode}`;
