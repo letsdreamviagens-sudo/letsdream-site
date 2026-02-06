@@ -1,10 +1,37 @@
-// Let’s Dream Viagens — B2B Internal (Hotelbeds Search + CheckRate + Booking Confirm)
-// Requires:
-// - /api/hotelbeds-search  (must return hotel.rateKey)
-// - /api/hotelbeds-checkrate
-// - /api/hotelbeds-booking-confirm
+// Let’s Dream — B2B interno (Hotelbeds)
+// Fluxo: Search -> Select 1 hotel -> Get rateKey (fallback) -> CheckRate -> Booking Confirm
+// Requer APIs:
+// - /api/hotelbeds-search      (sua busca atual)
+// - /api/hotelbeds-ratekey     (novo: pega rateKey pelo hotelCode)
+// - /api/hotelbeds-checkrate   (novo: revalida rateKey)
+// - /api/hotelbeds-booking-confirm (novo: confirma reserva)
 
-// ===== Destination mapping =====
+function $(id) { return document.getElementById(id); }
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function toNum(x) {
+  const n = Number(String(x ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function setHint(text) {
+  const el = $("resultsHint");
+  if (el) el.textContent = text;
+}
+
+// ======= STATE =======
+let selected = null;
+// selected = { code, name, zoneName, destinationName, currency, minRate, rateKey }
+
+// ======= HELPERS =======
 const DESTINATION_MAP = {
   "NYC": "NYC",
   "NEW YORK": "NYC",
@@ -13,58 +40,42 @@ const DESTINATION_MAP = {
   "CANCUN": "CUN",
   "CANCÚN": "CUN",
   "PUNTA CANA": "PUJ",
-  "CARIBE": "PUJ",
   "PARIS": "PAR",
   "LONDRES": "LON",
   "LONDON": "LON",
   "RIO DE JANEIRO": "RIO",
   "SÃO PAULO": "SAO",
   "SAO PAULO": "SAO",
-
-  // Orlando via lat/lng (se ORL não existir na conta)
+  // Orlando pode ser via geolocalização (se ORL não existir)
   "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 },
 };
 
-function $(id) { return document.getElementById(id); }
-
-function toNum(x) {
-  const n = Number(String(x ?? "").replace(",", "."));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
 function buildHotelsApiUrl({ city, checkin, checkout, adults, children }) {
-  const cityKey = city.trim().toUpperCase();
-  const mapped = DESTINATION_MAP[cityKey];
+  const key = city.trim().toUpperCase();
+  const mapped = DESTINATION_MAP[key];
 
   if (mapped && typeof mapped === "object") {
     return `/api/hotelbeds-search?lat=${encodeURIComponent(mapped.lat)}&lng=${encodeURIComponent(mapped.lng)}&radius=${encodeURIComponent(mapped.radius || 35)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
   }
 
-  const destination = mapped || cityKey;
+  const destination = mapped || key;
   return `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
 }
 
-// ===== State =====
-let selected = null;
-// selected = { code, name, zoneName, destinationName, currency, minRate, rateKey }
-
-// ===== UI helpers =====
-function setHint(text) {
-  const hint = $("resultsHint");
-  if (hint) hint.textContent = text;
+async function fetchJson(url, options) {
+  const r = await fetch(url, options);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const msg = data?.error || data?.message || `Erro HTTP ${r.status}`;
+    const err = new Error(msg);
+    err.status = r.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
 }
 
 function renderSelected() {
-  // Reaproveita a área do “carrinho” se ela existir
   const wrap = $("cartItems");
   const totalEl = $("cartTotal");
 
@@ -73,15 +84,17 @@ function renderSelected() {
       wrap.innerHTML = `<p class="note">Nenhum hotel selecionado.</p>`;
     } else {
       wrap.innerHTML = `
-        <div class="cart-item" style="display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border:1px solid rgba(0,0,0,.12);border-radius:12px;margin:10px 0">
+        <div style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:12px;border:1px solid rgba(0,0,0,.12);border-radius:12px;margin:10px 0">
           <div style="flex:1">
             <b>${escapeHtml(selected.name)}</b><br>
             <small style="opacity:.85">${escapeHtml(selected.zoneName || "-")} • ${escapeHtml(selected.destinationName || "")}</small><br>
             <small style="opacity:.85">rateKey: <span style="word-break:break-all">${escapeHtml(selected.rateKey || "")}</span></small>
+            <div style="margin-top:8px;font-size:12px;opacity:.85">
+              *Valor sujeito à confirmação no fornecedor (CheckRate).
+            </div>
           </div>
           <div style="min-width:160px;text-align:right">
             <div><b>${escapeHtml(selected.currency || "EUR")}</b> ${toNum(selected.minRate).toFixed(2)}</div>
-            <small style="opacity:.85;display:block;margin-top:6px">*Valor sujeito à confirmação</small>
           </div>
         </div>
       `;
@@ -89,30 +102,66 @@ function renderSelected() {
   }
 
   if (totalEl) {
-    if (!selected) totalEl.textContent = "—";
-    else totalEl.textContent = `${selected.currency || "EUR"} ${toNum(selected.minRate).toFixed(2)} (ref.)`;
+    totalEl.textContent = selected
+      ? `${selected.currency || "EUR"} ${toNum(selected.minRate).toFixed(2)} (ref.)`
+      : "—";
   }
 
-  // Repurpose botões antigos, se existirem:
-  const payBtn = $("payBtn"); // no HTML antigo era PagBank
+  // Reaproveita botão antigo do PagBank como "Confirmar reserva"
+  const payBtn = $("payBtn");
   if (payBtn) {
     payBtn.textContent = "Confirmar reserva";
-    payBtn.classList.add("btn-primary");
+    payBtn.disabled = !selected;
   }
 
+  // Esconde WhatsApp no B2B interno (se existir)
   const whatsappBtn = $("whatsappBtn");
-  if (whatsappBtn) {
-    whatsappBtn.style.display = "none"; // B2B interno: esconder
-  }
+  if (whatsappBtn) whatsappBtn.style.display = "none";
 }
 
 function clearSelection() {
   selected = null;
   renderSelected();
-  alert("Seleção limpa.");
 }
 
-// ===== Render hotels =====
+function getFormParams() {
+  return {
+    city: ($("city")?.value || "").trim(),
+    checkin: $("checkin")?.value || "",
+    checkout: $("checkout")?.value || "",
+    adults: $("adults")?.value || "2",
+    children: $("children")?.value || "0",
+  };
+}
+
+// ======= SEARCH =======
+async function buscarHoteis(e) {
+  e?.preventDefault?.();
+
+  const { city, checkin, checkout, adults, children } = getFormParams();
+  if (!city || !checkin || !checkout) {
+    alert("Preencha cidade, check-in e check-out.");
+    return;
+  }
+
+  const list = $("hotelsList");
+  if (list) list.innerHTML = `<p class="note">Buscando hotéis...</p>`;
+  setHint("Buscando...");
+
+  try {
+    const url = buildHotelsApiUrl({ city, checkin, checkout, adults, children });
+    const data = await fetchJson(url);
+    console.log("SEARCH OK:", data);
+    renderHotels(data);
+    $("resultados")?.scrollIntoView?.({ behavior: "smooth" });
+  } catch (err) {
+    console.error("SEARCH ERRO:", err);
+    if ($("hotelsList")) $("hotelsList").innerHTML = `<p class="note">Erro ao buscar hotéis. Veja o console (F12).</p>`;
+    setHint("Erro");
+    alert(`Erro ao buscar hotéis: ${err.message}`);
+  }
+}
+
 function renderHotels(data) {
   const list = $("hotelsList");
   if (!list) return;
@@ -131,14 +180,11 @@ function renderHotels(data) {
 
   list.innerHTML = hotels.map(h => `
     <article class="hotel">
-      <div class="img" style="background-image:url('img/orlando.jpg')"></div>
-
       <div class="top">
         <div>
           <h3>${escapeHtml(h.name)}</h3>
           <div class="meta">${escapeHtml(h.zoneName || "-")} • ${escapeHtml(h.destinationName || "")}</div>
         </div>
-
         <div class="price">
           <small>Menor preço</small>
           ${escapeHtml(currency)} ${toNum(h.minRate).toFixed(2)}
@@ -149,7 +195,7 @@ function renderHotels(data) {
         <button
           class="btn btn-primary"
           type="button"
-          data-select-hotel="1"
+          data-select="1"
           data-code="${escapeHtml(h.code)}"
           data-name="${escapeHtml(h.name)}"
           data-zone="${escapeHtml(h.zoneName || '')}"
@@ -162,157 +208,140 @@ function renderHotels(data) {
     </article>
   `).join("");
 
-  list.querySelectorAll("[data-select-hotel]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const rateKey = btn.dataset.ratekey;
-      if (!rateKey) {
-        alert("Esse resultado não veio com rateKey. Ajuste /api/hotelbeds-search para incluir hotel.rateKey.");
-        return;
-      }
-
-      selected = {
-        code: btn.dataset.code,
-        name: btn.dataset.name,
-        zoneName: btn.dataset.zone,
-        destinationName: btn.dataset.dest,
-        currency: btn.dataset.currency,
-        minRate: btn.dataset.price,
-        rateKey: rateKey
-      };
-
-      renderSelected();
-      $("carrinho")?.scrollIntoView?.({ behavior: "smooth" });
-    });
+  list.querySelectorAll("[data-select]").forEach(btn => {
+    btn.addEventListener("click", () => onSelectHotel(btn));
   });
 }
 
-// ===== Search =====
-async function buscarHoteis(e) {
-  e?.preventDefault?.();
-
-  const city = ($("city")?.value || "").trim();
-  const checkin = $("checkin")?.value || "";
-  const checkout = $("checkout")?.value || "";
-  const adults = $("adults")?.value || "2";
-  const children = $("children")?.value || "0";
-
-  if (!city || !checkin || !checkout) {
-    alert("Preencha cidade, check-in e check-out.");
-    return;
-  }
-
-  const list = $("hotelsList");
-  if (list) list.innerHTML = `<p class="note">Buscando hotéis...</p>`;
-  setHint("Buscando...");
-
-  const url = buildHotelsApiUrl({ city, checkin, checkout, adults, children });
-
-  const r = await fetch(url);
-  const data = await r.json().catch(() => ({}));
-
-  console.log("HOTELBEDS SEARCH:", data);
-
-  if (!r.ok) {
-    console.error("Erro Hotelbeds:", data);
-    if (list) list.innerHTML = `<p class="note">Erro ao buscar hotéis. Veja o console (F12).</p>`;
-    setHint("Erro");
-    return;
-  }
-
-  renderHotels(data);
-  $("resultados")?.scrollIntoView?.({ behavior: "smooth" });
+// ======= SELEÇÃO + RATEKEY FALLBACK =======
+async function getRateKeyByHotelCode(hotelCode) {
+  const { checkin, checkout, adults, children } = getFormParams();
+  const url = `/api/hotelbeds-ratekey?hotelCode=${encodeURIComponent(hotelCode)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+  const data = await fetchJson(url);
+  return data.rateKey;
 }
 
-// ===== Booking flow (CheckRate -> Booking Confirm) =====
-function buildPaxesFromForm() {
-  // Para B2B interno: se você não tiver tela de hóspedes ainda, vamos no mínimo com 1 AD.
-  // Se existirem inputs de holder/paxes no HTML, usamos; senão, default.
-  const holderName = ($("holderName")?.value || "AGENTE").trim();
-  const holderSurname = ($("holderSurname")?.value || "LETS DREAM").trim();
+async function onSelectHotel(btn) {
+  try {
+    const hotelCode = btn.dataset.code;
+    let rateKey = btn.dataset.ratekey;
 
-  // Um pax AD mínimo
-  const paxes = [{ type: "AD", name: holderName, surname: holderSurname }];
+    // ✅ Se a listagem não trouxe rateKey, busca via endpoint específico
+    if (!rateKey) {
+      setHint("Obtendo rateKey...");
+      rateKey = await getRateKeyByHotelCode(hotelCode);
+    }
+
+    selected = {
+      code: hotelCode,
+      name: btn.dataset.name,
+      zoneName: btn.dataset.zone,
+      destinationName: btn.dataset.dest,
+      currency: btn.dataset.currency,
+      minRate: btn.dataset.price,
+      rateKey
+    };
+
+    console.log("SELECTED:", selected);
+    renderSelected();
+    $("carrinho")?.scrollIntoView?.({ behavior: "smooth" });
+    setHint("Hotel selecionado");
+  } catch (err) {
+    console.error("RATEKEY ERRO:", err);
+    alert(`Não consegui obter rateKey desse hotel.\n${err.message}\n\nVeja o console (F12).`);
+    setHint("Erro rateKey");
+  }
+}
+
+// ======= BOOKING FLOW =======
+function buildBookingPayload() {
+  // Para começar, usamos dados fixos (uso interno).
+  // Se você quiser, depois colocamos inputs holderName/holderSurname na tela.
+  const holder = {
+    name: "AGENTE",
+    surname: "LETS DREAM"
+  };
 
   return {
-    holder: { name: holderName, surname: holderSurname },
-    rooms: [{ rateKey: selected.rateKey, paxes }]
+    clientReference: `LD-${Date.now()}`,
+    holder,
+    rooms: [
+      {
+        rateKey: selected.rateKey,
+        paxes: [
+          { type: "AD", name: holder.name, surname: holder.surname }
+        ]
+      }
+    ]
   };
 }
 
 async function confirmarReserva() {
-  if (!selected?.rateKey) {
-    alert("Selecione um hotel primeiro.");
-    return;
+  try {
+    if (!selected?.rateKey) {
+      alert("Selecione um hotel primeiro.");
+      return;
+    }
+
+    setHint("CheckRate...");
+    const check = await fetchJson("/api/hotelbeds-checkrate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rateKey: selected.rateKey })
+    });
+    console.log("CHECKRATE OK:", check);
+
+    // (opcional) se quiser comparar preço e pedir aceite:
+    // Muitos retornos vem em check.hotel.rooms[0].rates[0].net, mas varia.
+    const netGuess =
+      toNum(check?.hotel?.rooms?.[0]?.rates?.[0]?.net) ||
+      toNum(check?.rate?.net);
+
+    if (netGuess && toNum(selected.minRate) && Math.abs(netGuess - toNum(selected.minRate)) > 0.01) {
+      const ok = confirm(
+        `Preço mudou.\nAntes: ${selected.currency} ${toNum(selected.minRate).toFixed(2)}\nAgora: ${selected.currency} ${netGuess.toFixed(2)}\n\nConfirmar mesmo assim?`
+      );
+      if (!ok) return;
+    }
+
+    setHint("Confirmando booking...");
+    const payload = buildBookingPayload();
+
+    const booking = await fetchJson("/api/hotelbeds-booking-confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    console.log("BOOKING OK:", booking);
+
+    const ref =
+      booking?.booking?.reference ||
+      booking?.booking?.bookingReference ||
+      booking?.reference ||
+      "OK";
+
+    setHint("Reserva confirmada ✅");
+    alert(`Reserva CONFIRMADA!\nReferência: ${ref}`);
+  } catch (err) {
+    console.error("CONFIRM ERRO:", err);
+    setHint("Erro");
+    alert(`Erro ao confirmar reserva: ${err.message}\n\nVeja o console (F12).`);
   }
-
-  // 1) CheckRate
-  const r1 = await fetch("/api/hotelbeds-checkrate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ rateKey: selected.rateKey })
-  });
-
-  const check = await r1.json().catch(() => ({}));
-  console.log("CHECKRATE:", check);
-
-  if (!r1.ok) {
-    alert("CheckRate falhou (tarifa pode ter mudado ou ficado indisponível). Veja o console (F12).");
-    return;
-  }
-
-  // Opcional: comparar preços e pedir aceite
-  // (mantendo simples: B2B interno)
-  const confirmedNet = toNum(check?.hotel?.rooms?.[0]?.rates?.[0]?.net || check?.rate?.net);
-  if (confirmedNet && toNum(selected.minRate) && Math.abs(confirmedNet - toNum(selected.minRate)) > 0.01) {
-    const ok = confirm(
-      `Preço mudou.\nAntes: ${selected.currency} ${toNum(selected.minRate).toFixed(2)}\nAgora: ${selected.currency} ${confirmedNet.toFixed(2)}\n\nDeseja confirmar mesmo assim?`
-    );
-    if (!ok) return;
-  }
-
-  // 2) Booking Confirm
-  const { holder, rooms } = buildPaxesFromForm();
-
-  const payload = {
-    clientReference: `LD-${Date.now()}`,
-    holder,
-    rooms
-  };
-
-  const r2 = await fetch("/api/hotelbeds-booking-confirm", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  const booking = await r2.json().catch(() => ({}));
-  console.log("BOOKING:", booking);
-
-  if (!r2.ok) {
-    alert("Booking falhou. Veja o console (F12).");
-    return;
-  }
-
-  const ref =
-    booking?.booking?.reference ||
-    booking?.booking?.bookingReference ||
-    booking?.reference ||
-    "OK";
-
-  alert(`Reserva CONFIRMADA!\nReferência: ${ref}`);
 }
 
-// ===== Init =====
+// ======= INIT =======
 document.addEventListener("DOMContentLoaded", () => {
   $("searchForm")?.addEventListener("submit", buscarHoteis);
 
-  // Reaproveita botões existentes, se existirem
-  $("clearCartBtn")?.addEventListener("click", clearSelection);
-
-  // Se você criar um botão novo no HTML com id confirmBookingBtn, ele funciona.
-  // Se não criar, ele reaproveita o antigo payBtn (que antes era PagBank).
-  $("confirmBookingBtn")?.addEventListener("click", confirmarReserva);
+  // Botão antigo (PagBank) vira Confirmar reserva
   $("payBtn")?.addEventListener("click", confirmarReserva);
+
+  // Botão opcional, se existir no HTML
+  $("confirmBookingBtn")?.addEventListener("click", confirmarReserva);
+
+  // Botão opcional, se existir no HTML
+  $("clearCartBtn")?.addEventListener("click", clearSelection);
 
   renderSelected();
 });
