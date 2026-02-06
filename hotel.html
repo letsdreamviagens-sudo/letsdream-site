@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Detalhes do hotel • Let’s Dream</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="logo">Let’s Dream</a>
+  </header>
+
+  <main class="container" style="max-width: 980px; margin: 0 auto; padding: 20px;">
+    <h1 id="hotelName">Carregando...</h1>
+    <p id="hotelMeta" style="opacity:.8"></p>
+
+    <section class="card" style="padding:16px;border:1px solid rgba(0,0,0,.12);border-radius:14px;margin:16px 0;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <label style="display:flex;gap:8px;align-items:center;">
+          <span>Cotação EUR→BRL</span>
+          <input id="fx" type="number" step="0.01" value="5.00" style="width:110px;padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,.2);" />
+        </label>
+        <span style="opacity:.8;font-size:12px;">*BRL é estimativa. O valor final é confirmado no CheckRate.</span>
+      </div>
+    </section>
+
+    <h2>Quartos e tarifas</h2>
+    <div id="ratesWrap">Carregando tarifas...</div>
+
+    <section class="card" style="padding:16px;border:1px solid rgba(0,0,0,.12);border-radius:14px;margin:16px 0;">
+      <h3>Confirmar reserva</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input id="holderName" placeholder="Nome do titular" value="AGENTE" style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2);" />
+        <input id="holderSurname" placeholder="Sobrenome do titular" value="LETS DREAM" style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2);" />
+      </div>
+
+      <button id="confirmBtn" class="btn btn-primary" style="margin-top:12px;">
+        Confirmar reserva
+      </button>
+
+      <p id="statusLine" style="margin-top:10px;opacity:.85;"></p>
+    </section>
+  </main>
+
+  <script src="hotel.js"></script>
+</body>
+</html>
