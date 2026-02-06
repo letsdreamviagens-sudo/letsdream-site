@@ -4,6 +4,34 @@ function sign(apiKey, secret) {
   const ts = Math.floor(Date.now() / 1000);
   return crypto.createHash("sha256").update(apiKey + secret + ts).digest("hex");
 }
+function toNum(x) {
+  const n = Number(String(x ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : Infinity;
+}
+
+function extractCheapestRateKey(hotel) {
+  let best = null;
+  const rooms = hotel?.rooms || [];
+  for (const room of rooms) {
+    const rates = room?.rates || [];
+    for (const r of rates) {
+      const net = toNum(r?.net);
+      const rk = r?.rateKey;
+      if (!rk) continue;
+      if (!best || net < best.net) best = { net, rateKey: rk };
+    }
+  }
+  return best?.rateKey || null;
+}
+// Injeta rateKey (da tarifa mais barata) em cada hotel, quando existir
+try {
+  const hotels = data?.hotels?.hotels || [];
+  for (const h of hotels) {
+    const rk = extractCheapestRateKey(h);
+    if (rk) h.rateKey = rk;
+  }
+} catch {}
+
 
 export default async function handler(req, res) {
   try {
