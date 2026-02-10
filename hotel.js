@@ -20,7 +20,12 @@ async function fetchJson(url, options) {
   const r = await fetch(url, options);
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
-    throw new Error(data?.error || data?.message || `Erro ${r.status}`);
+    // importantíssimo: isso deixa o erro claro no console
+    const msg = data?.error || data?.message || `Erro ${r.status}`;
+    const err = new Error(msg);
+    err.status = r.status;
+    err.data = data;
+    throw err;
   }
   return data;
 }
@@ -28,24 +33,60 @@ async function fetchJson(url, options) {
 let selectedRateKey = null;
 let selectedCurrency = "EUR";
 let selectedNet = 0;
+let hotelCache = null;
 
 function brlEstimate(eur, fx) {
   return eur * fx;
 }
 
+function setHeroImage(hotel) {
+  const hero = document.getElementById("heroImg");
+  if (!hero) return;
+
+  const dest = (hotel?.destinationName || "").toLowerCase();
+
+  // Se você criar imagens em /img, ele usa. Se não existir, fica no gradiente do CSS.
+  let img = "";
+  if (dest.includes("orlando")) img = "/img/orlando.jpg";
+  else if (dest.includes("london")) img = "/img/london.jpg";
+  else if (dest.includes("sao paulo") || dest.includes("são paulo")) img = "/img/saopaulo.jpg";
+  else if (dest.includes("maceio") || dest.includes("maceió") || dest.includes("alagoas")) img = "/img/alagoas.jpg";
+
+  if (img) hero.style.backgroundImage = `url('${img}')`;
+}
+
+function buildPaxesFromQuery(holderName, holderSurname) {
+  const adults = Number(qs("adults") || "2");
+  const children = Number(qs("children") || "0");
+
+  const paxes = [];
+  for (let i = 0; i < adults; i++) {
+    paxes.push({ type: "AD", name: holderName, surname: holderSurname });
+  }
+  for (let i = 0; i < children; i++) {
+    paxes.push({ type: "CH", name: holderName, surname: holderSurname, age: 7 });
+  }
+  return paxes;
+}
+
 function renderRates(hotel) {
+  hotelCache = hotel;
+
   const wrap = document.getElementById("ratesWrap");
   const fxInput = document.getElementById("fx");
+  const ratesHint = document.getElementById("ratesHint");
+  const confirmBtn = document.getElementById("confirmBtn");
 
   const rooms = hotel?.rooms || [];
   if (!rooms.length) {
-    wrap.innerHTML = `<p style="opacity:.85">Sem tarifas disponíveis nesse momento.</p>`;
+    wrap.innerHTML = `<p class="muted">Sem tarifas disponíveis nesse momento.</p>`;
+    if (ratesHint) ratesHint.textContent = "";
     return;
   }
 
   const fx = toNum(fxInput.value) || 0;
 
-  // Flatten room/rates
+  // Flatten
   const items = [];
   for (const room of rooms) {
     for (const rate of (room.rates || [])) {
@@ -61,8 +102,8 @@ function renderRates(hotel) {
     }
   }
 
-  // Ordenar por menor net
   items.sort((a,b) => a.net - b.net);
+  if (ratesHint) ratesHint.textContent = `${items.length} tarifas`;
 
   wrap.innerHTML = items.map((it, idx) => {
     const brl = fx ? brlEstimate(it.net, fx) : null;
@@ -72,20 +113,16 @@ function renderRates(hotel) {
       : "Cancelamento: consultar no CheckRate";
 
     return `
-      <div style="border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px;margin:12px 0;">
-        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-          <div>
-            <b>${escapeHtml(it.roomName)}</b><br/>
-            <small style="opacity:.85">Regime: ${escapeHtml(it.board)} • ${it.refundable ? "Reembolsável" : "Não reembolsável"}</small><br/>
-            <small style="opacity:.85">${escapeHtml(cancelText)}</small>
-          </div>
-          <div style="text-align:right;min-width:180px;">
-            <div><b>${escapeHtml(it.currency)}</b> ${it.net.toFixed(2)}</div>
-            ${brl !== null ? `<div style="opacity:.85">≈ R$ ${brl.toFixed(2)}</div>` : ""}
-            <button data-pick="${idx}" style="margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,0,0,.2);cursor:pointer;">
-              Escolher esta tarifa
-            </button>
-          </div>
+      <div class="rate-card">
+        <div class="rate-left">
+          <b>${escapeHtml(it.roomName)}</b><br/>
+          <div class="muted">Regime: ${escapeHtml(it.board)} • ${it.refundable ? "Reembolsável" : "Não reembolsável"}</div>
+          <div class="muted">${escapeHtml(cancelText)}</div>
+        </div>
+        <div class="rate-right">
+          <div class="price">${escapeHtml(it.currency)} ${it.net.toFixed(2)}</div>
+          ${brl !== null ? `<div class="brl">≈ R$ ${brl.toFixed(2)}</div>` : ""}
+          <button class="pick-btn" data-pick="${idx}">Escolher esta tarifa</button>
         </div>
       </div>
     `;
@@ -98,6 +135,7 @@ function renderRates(hotel) {
         alert("Essa tarifa não retornou rateKey.");
         return;
       }
+
       selectedRateKey = it.rateKey;
       selectedCurrency = it.currency;
       selectedNet = it.net;
@@ -105,13 +143,18 @@ function renderRates(hotel) {
       document.getElementById("statusLine").textContent =
         `Tarifa selecionada: ${selectedCurrency} ${selectedNet.toFixed(2)} (rateKey salvo).`;
 
-      // destaque visual simples
-      wrap.querySelectorAll("button[data-pick]").forEach(b => b.style.background = "");
-      btn.style.background = "rgba(0,0,0,.06)";
+      // UI
+      wrap.querySelectorAll(".pick-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+
+      if (confirmBtn) confirmBtn.disabled = false;
     });
   });
 
-  fxInput.addEventListener("input", () => renderRates(hotel));
+  fxInput.addEventListener("input", () => {
+    // rerender mantendo seleção (simples: limpa seleção ao mexer fx)
+    renderRates(hotelCache);
+  });
 }
 
 async function main() {
@@ -127,19 +170,12 @@ async function main() {
   if (!hotelCode || !checkin || !checkout) {
     document.getElementById("ratesWrap").textContent = "Faltam parâmetros na URL (hotelCode/checkin/checkout).";
     return;
-    // HERO image (placeholder por destino)
-const dest = (hotel.destinationName || "").toLowerCase();
-let img = "/img/hotel-placeholder.jpg";
-if (dest.includes("orlando")) img = "/img/orlando.jpg";
-if (dest.includes("sao paulo") || dest.includes("são paulo")) img = "/img/saopaulo.jpg";
-const hero = document.getElementById("heroImg");
-if (hero) hero.style.backgroundImage = `url('${img}')`;
   }
 
   document.getElementById("hotelName").textContent = name || `Hotel ${hotelCode}`;
   document.getElementById("hotelMeta").textContent = [zone, dest].filter(Boolean).join(" • ");
 
-  // 🔥 Busca disponibilidade do hotel específico (rooms + rates + rateKey)
+  // ✅ busca availability do hotel específico (rooms + rates + rateKey)
   const url = `/api/hotelbeds-hotel-availability?hotelCode=${encodeURIComponent(hotelCode)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
 
   const data = await fetchJson(url);
@@ -150,10 +186,11 @@ if (hero) hero.style.backgroundImage = `url('${img}')`;
     return;
   }
 
-  // Atualiza título/meta se o retorno vier com nome
+  // Atualiza título/meta se vier do backend
   if (hotel.name) document.getElementById("hotelName").textContent = hotel.name;
   document.getElementById("hotelMeta").textContent = [hotel.zoneName, hotel.destinationName].filter(Boolean).join(" • ");
 
+  setHeroImage(hotel);
   renderRates(hotel);
 
   // Confirmar reserva
@@ -172,7 +209,6 @@ if (hero) hero.style.backgroundImage = `url('${img}')`;
       }
 
       document.getElementById("statusLine").textContent = "CheckRate...";
-
       await fetchJson("/api/hotelbeds-checkrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,6 +217,7 @@ if (hero) hero.style.backgroundImage = `url('${img}')`;
 
       document.getElementById("statusLine").textContent = "Confirmando booking...";
 
+      // ✅ paxes bate com adults/children da busca
       const booking = await fetchJson("/api/hotelbeds-booking-confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,7 +227,7 @@ if (hero) hero.style.backgroundImage = `url('${img}')`;
           rooms: [
             {
               rateKey: selectedRateKey,
-              paxes: [{ type: "AD", name: holderName, surname: holderSurname }]
+              paxes: buildPaxesFromQuery(holderName, holderSurname)
             }
           ]
         })
@@ -200,9 +237,9 @@ if (hero) hero.style.backgroundImage = `url('${img}')`;
       document.getElementById("statusLine").textContent = `Reserva confirmada ✅ Ref: ${ref}`;
       alert(`Reserva CONFIRMADA!\nReferência: ${ref}`);
     } catch (e) {
-      console.error(e);
+      console.error("CONFIRM ERROR:", e);
       document.getElementById("statusLine").textContent = `Erro: ${e.message}`;
-      alert(`Erro ao confirmar: ${e.message}`);
+      alert(`Erro ao confirmar: ${e.message}\n\nAbra o Console (F12) para ver detalhes.`);
     }
   });
 }
