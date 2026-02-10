@@ -1,0 +1,144 @@
+/* hotel.css — só para hotel.html */
+
+.hotel-page { max-width: 980px; margin: 0 auto; padding: 18px 14px; }
+.muted { opacity: .78; }
+.small { font-size: 12px; }
+
+.hotel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+
+.hotel-header h1 { margin: 0; }
+.hotel-header p { margin: 6px 0 0; }
+
+.card{
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 18px;
+  padding: 16px;
+  margin: 14px 0;
+  background: #fff;
+}
+
+.section-title{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hotel-hero{
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.12);
+  margin: 14px 0;
+  position: relative;
+  background: #f2f2f2;
+}
+
+.hotel-hero-img{
+  height: 260px;
+  background-size: cover;
+  background-position: center;
+  background-image: linear-gradient(135deg, rgba(131,172,222,.55), rgba(252,217,97,.45));
+}
+
+.hotel-hero-overlay{
+  position:absolute;
+  left: 12px;
+  bottom: 12px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip{
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.fx-row{
+  display:flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.fx-label{
+  display:flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.fx-label input{
+  width: 110px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.18);
+}
+
+.holder-row{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+
+.holder-row input{
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.18);
+  min-width: 220px;
+  flex: 1;
+}
+
+.rate-card{
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 10px 0;
+  display:flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.rate-left b { font-size: 15px; }
+.rate-left .muted { margin-top: 4px; }
+
+.rate-right{
+  min-width: 200px;
+  text-align: right;
+}
+
+.rate-right .price{
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.rate-right .brl{
+  margin-top: 2px;
+  opacity: .8;
+}
+
+.pick-btn{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.18);
+  background: #fff;
+  cursor: pointer;
+}
+
+.pick-btn.selected{
+  background: rgba(131,172,222,.22);
+  border-color: rgba(131,172,222,.8);
+}
