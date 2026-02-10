@@ -4,49 +4,65 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Detalhes do hotel • Let’s Dream</title>
+
+  <!-- Reusa seu CSS principal se existir -->
   <link rel="stylesheet" href="styles.css" />
+  <!-- CSS extra só para a página do hotel -->
+  <link rel="stylesheet" href="hotel.css" />
 </head>
 <body>
+
   <header class="topbar">
-    <a href="/" class="logo">Let’s Dream</a>
+    <div class="container">
+      <a href="/" class="logo">Let’s Dream</a>
+    </div>
   </header>
 
-  <main class="container" style="max-width: 980px; margin: 0 auto; padding: 20px;">
-    <h1 id="hotelName">Carregando...</h1>
-    <p id="hotelMeta" style="opacity:.8"></p>
-    <section id="hero" style="border-radius:18px; overflow:hidden; margin: 18px 0; border:1px solid rgba(0,0,0,.12);">
-  <div id="heroImg" style="
-    height: 260px;
-    background-size: cover;
-    background-position: center;
-    background-image: url('/img/hotel-placeholder.jpg');
-  "></div>
-</section>
-    <section class="card" style="padding:16px;border:1px solid rgba(0,0,0,.12);border-radius:14px;margin:16px 0;">
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-        <label style="display:flex;gap:8px;align-items:center;">
-          <span>Cotação EUR→BRL</span>
-          <input id="fx" type="number" step="0.01" value="5.00" style="width:110px;padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,.2);" />
-        </label>
-        <span style="opacity:.8;font-size:12px;">*BRL é estimativa. O valor final é confirmado no CheckRate.</span>
+  <main class="container hotel-page">
+    <div class="hotel-header">
+      <div>
+        <h1 id="hotelName">Carregando...</h1>
+        <p id="hotelMeta" class="muted"></p>
+      </div>
+      <a href="/" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <section class="hotel-hero">
+      <div id="heroImg" class="hotel-hero-img"></div>
+      <div class="hotel-hero-overlay">
+        <span class="chip">B2B interno</span>
+        <span class="chip">Preço em EUR (fornecedor)</span>
       </div>
     </section>
 
-    <h2>Quartos e tarifas</h2>
-    <div id="ratesWrap">Carregando tarifas...</div>
+    <section class="card">
+      <div class="fx-row">
+        <label class="fx-label">
+          <span><b>Cotação EUR→BRL</b></span>
+          <input id="fx" type="number" step="0.01" value="5.00" />
+        </label>
+        <span class="muted small">*BRL é estimativa. O valor final é confirmado no CheckRate.</span>
+      </div>
+    </section>
 
-    <section class="card" style="padding:16px;border:1px solid rgba(0,0,0,.12);border-radius:14px;margin:16px 0;">
-      <h3>Confirmar reserva</h3>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <input id="holderName" placeholder="Nome do titular" value="AGENTE" style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2);" />
-        <input id="holderSurname" placeholder="Sobrenome do titular" value="LETS DREAM" style="padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.2);" />
+    <section class="card">
+      <div class="section-title">
+        <h2>Quartos e tarifas</h2>
+        <span id="ratesHint" class="muted small"></span>
+      </div>
+      <div id="ratesWrap">Carregando tarifas...</div>
+    </section>
+
+    <section class="card">
+      <h2>Confirmar reserva</h2>
+
+      <div class="holder-row">
+        <input id="holderName" placeholder="Nome do titular" value="AGENTE" />
+        <input id="holderSurname" placeholder="Sobrenome do titular" value="LETS DREAM" />
       </div>
 
-      <button id="confirmBtn" class="btn btn-primary" style="margin-top:12px;">
-        Confirmar reserva
-      </button>
-
-      <p id="statusLine" style="margin-top:10px;opacity:.85;"></p>
+      <button id="confirmBtn" class="btn btn-primary" disabled>Confirmar reserva</button>
+      <p id="statusLine" class="muted" style="margin-top:10px;"></p>
     </section>
   </main>
 
