@@ -1,7 +1,8 @@
 // app.js — Let’s Dream (B2B interno) — Página de BUSCA (index.html)
 // Fluxo: Buscar -> listar -> Selecionar -> redireciona para /hotel.html
-// Requer API:
+// Requer APIs:
 // - /api/hotelbeds-search
+// - /api/geocode  (para qualquer cidade via lat/lng)
 
 function $(id) { return document.getElementById(id); }
 
@@ -37,8 +38,7 @@ async function fetchJson(url, options) {
   return data;
 }
 
-// ===== Destination mapping (opcional) =====
-// Se seu /api/hotelbeds-search aceita destination=CODE, mapeie nomes comuns:
+// Mapeamentos rápidos (opcional). Se não bater, a gente usa geocode (lat/lng).
 const DESTINATION_MAP = {
   "NYC": "NYC",
   "NEW YORK": "NYC",
@@ -53,7 +53,6 @@ const DESTINATION_MAP = {
   "RIO DE JANEIRO": "RIO",
   "SÃO PAULO": "SAO",
   "SAO PAULO": "SAO",
-  // Orlando via geolocalização (se ORL não existir)
   "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 },
 };
 
@@ -67,19 +66,30 @@ function getFormParams() {
   };
 }
 
-function buildHotelsApiUrl({ city, checkin, checkout, adults, children }) {
+function buildHotelsApiUrlByLatLng({ lat, lng, radiusKm, checkin, checkout, adults, children }) {
+  return `/api/hotelbeds-search?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&radius=${encodeURIComponent(radiusKm || 35)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+}
+
+function buildHotelsApiUrlByDestination({ destination, checkin, checkout, adults, children }) {
+  return `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+}
+
+async function resolveCityToSearch(city) {
   const key = city.trim().toUpperCase();
   const mapped = DESTINATION_MAP[key];
 
   if (mapped && typeof mapped === "object") {
-    return `/api/hotelbeds-search?lat=${encodeURIComponent(mapped.lat)}&lng=${encodeURIComponent(mapped.lng)}&radius=${encodeURIComponent(mapped.radius || 35)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+    return { mode: "latlng", lat: mapped.lat, lng: mapped.lng, radius: mapped.radius || 35, label: key };
+  }
+  if (mapped && typeof mapped === "string") {
+    return { mode: "destination", destination: mapped, label: key };
   }
 
-  const destination = mapped || key;
-  return `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+  // ✅ fallback: geocode qualquer cidade/estado/bairro (ex: "Alagoas", "Maceió", "Maragogi")
+  const geo = await fetchJson(`/api/geocode?query=${encodeURIComponent(city)}`);
+  return { mode: "latlng", lat: geo.lat, lng: geo.lng, radius: 35, label: geo.displayName || city };
 }
 
-// ===== Render list =====
 function renderHotels(data, params) {
   const list = $("hotelsList");
   if (!list) return;
@@ -97,7 +107,7 @@ function renderHotels(data, params) {
   hotels.sort((a, b) => toNum(a.minRate) - toNum(b.minRate));
 
   list.innerHTML = hotels.map(h => `
-    <article class="hotel" style="border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px;margin:12px 0;">
+    <article class="hotel" style="border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px;margin:12px 0;background:#fff;">
       <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;">
         <div style="flex:1">
           <h3 style="margin:0 0 6px 0;">${escapeHtml(h.name)}</h3>
@@ -107,6 +117,7 @@ function renderHotels(data, params) {
         <div style="text-align:right;min-width:180px;">
           <small style="opacity:.8">Menor preço</small>
           <div style="font-weight:700">${escapeHtml(currency)} ${toNum(h.minRate).toFixed(2)}</div>
+
           <button
             type="button"
             class="btn btn-primary"
@@ -122,7 +133,6 @@ function renderHotels(data, params) {
     </article>
   `).join("");
 
-  // Clique em Selecionar -> redireciona para hotel.html
   list.querySelectorAll("[data-select]").forEach(btn => {
     btn.addEventListener("click", () => {
       const hotelCode = btn.dataset.code;
@@ -142,7 +152,6 @@ function renderHotels(data, params) {
   });
 }
 
-// ===== Search handler =====
 async function buscarHoteis(e) {
   e?.preventDefault?.();
 
@@ -157,9 +166,17 @@ async function buscarHoteis(e) {
   setHint("Buscando...");
 
   try {
-    const url = buildHotelsApiUrl(params);
+    const resolved = await resolveCityToSearch(params.city);
+
+    let url;
+    if (resolved.mode === "destination") {
+      url = buildHotelsApiUrlByDestination({ destination: resolved.destination, ...params });
+    } else {
+      url = buildHotelsApiUrlByLatLng({ lat: resolved.lat, lng: resolved.lng, radiusKm: resolved.radius, ...params });
+    }
+
     const data = await fetchJson(url);
-    console.log("SEARCH OK:", data);
+    console.log("SEARCH OK:", { resolved, data });
 
     renderHotels(data, params);
     $("resultados")?.scrollIntoView?.({ behavior: "smooth" });
@@ -171,12 +188,10 @@ async function buscarHoteis(e) {
   }
 }
 
-// ===== Init =====
 document.addEventListener("DOMContentLoaded", () => {
-  // liga no form de busca
   $("searchForm")?.addEventListener("submit", buscarHoteis);
 
-  // esconder botões antigos (se existirem)
+  // esconder botões antigos se existirem
   if ($("payBtn")) $("payBtn").style.display = "none";
   if ($("whatsappBtn")) $("whatsappBtn").style.display = "none";
   if ($("clearCartBtn")) $("clearCartBtn").style.display = "none";
