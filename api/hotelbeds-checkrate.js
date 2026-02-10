@@ -33,9 +33,9 @@ export default async function handler(req, res) {
       "Content-Type": "application/json",
       "Api-key": API_KEY,
       "X-Signature": sign(API_KEY, SECRET),
-      "Accept": "application/json"
+      "Accept": "application/json",
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   const data = await r.json().catch(() => ({}));
@@ -43,4 +43,3 @@ export default async function handler(req, res) {
 
   return res.status(200).json(data);
 }
-
