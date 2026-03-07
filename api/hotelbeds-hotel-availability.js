@@ -30,10 +30,10 @@ export default async function handler(req, res) {
           adults: Number(adults) || 2,
           children: Number(children) || 0,
           paxes: [
-            { type: "AD", age: 30 },
-            ...(Number(children) > 0 ? [{ type: "CH", age: 7 }] : []),
-          ],
-        },
+            ...Array.from({ length: Number(adults) || 2 }, () => ({ type: "AD", age: 30 })),
+            ...Array.from({ length: Number(children) || 0 }, () => ({ type: "CH", age: 7 }))
+          ]
+        }
       ],
       hotels: { hotel: [Number(hotelCode)] }
     };
@@ -46,9 +46,9 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         "Api-key": API_KEY,
         "X-Signature": sign(API_KEY, SECRET),
-        "Accept": "application/json",
+        "Accept": "application/json"
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
     const data = await r.json().catch(() => ({}));
