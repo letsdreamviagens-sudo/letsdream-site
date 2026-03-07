@@ -1,6 +1,3 @@
-// app.js — Let’s Dream (B2B interno)
-// Fluxo: Buscar -> listar hotéis -> Selecionar -> abre hotel.html
-
 function $(id) {
   return document.getElementById(id);
 }
@@ -56,22 +53,55 @@ const DESTINATION_MAP = {
   "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 }
 };
 
+function renderChildrenAgeFields() {
+  const childrenEl = document.getElementById("children");
+  const wrap = document.getElementById("childrenAgesWrap");
+  if (!childrenEl || !wrap) return;
+
+  const count = Number(childrenEl.value || 0);
+
+  if (count <= 0) {
+    wrap.innerHTML = "";
+    return;
+  }
+
+  wrap.innerHTML = Array.from({ length: count }, (_, i) => `
+    <label class="search-field">
+      <span>Idade criança ${i + 1}</span>
+      <select id="childAge${i}" class="child-age-select">
+        ${Array.from({ length: 17 }, (_, age) => `<option value="${age}">${age}</option>`).join("")}
+      </select>
+    </label>
+  `).join("");
+}
+
+function getChildrenAges() {
+  const children = Number(document.getElementById("children")?.value || 0);
+  const ages = [];
+  for (let i = 0; i < children; i++) {
+    const el = document.getElementById(`childAge${i}`);
+    ages.push(Number(el?.value || 7));
+  }
+  return ages;
+}
+
 function getFormParams() {
   return {
     city: ($("city")?.value || "").trim(),
     checkin: $("checkin")?.value || "",
     checkout: $("checkout")?.value || "",
     adults: $("adults")?.value || "2",
-    children: $("children")?.value || "0"
+    children: $("children")?.value || "0",
+    childrenAges: getChildrenAges()
   };
 }
 
-function buildHotelsApiUrlByLatLng({ lat, lng, radiusKm, checkin, checkout, adults, children }) {
-  return `/api/hotelbeds-search?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&radius=${encodeURIComponent(radiusKm || 35)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+function buildHotelsApiUrlByLatLng({ lat, lng, radiusKm, checkin, checkout, adults, children, childrenAges }) {
+  return `/api/hotelbeds-search?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&radius=${encodeURIComponent(radiusKm || 35)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}&childrenAges=${encodeURIComponent(JSON.stringify(childrenAges || []))}`;
 }
 
-function buildHotelsApiUrlByDestination({ destination, checkin, checkout, adults, children }) {
-  return `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}`;
+function buildHotelsApiUrlByDestination({ destination, checkin, checkout, adults, children, childrenAges }) {
+  return `/api/hotelbeds-search?destination=${encodeURIComponent(destination)}&checkin=${encodeURIComponent(checkin)}&checkout=${encodeURIComponent(checkout)}&adults=${encodeURIComponent(adults)}&children=${encodeURIComponent(children)}&childrenAges=${encodeURIComponent(JSON.stringify(childrenAges || []))}`;
 }
 
 async function resolveCityToSearch(city) {
@@ -141,12 +171,15 @@ function renderHotels(data, params) {
 
   list.querySelectorAll(".hotel-select-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      const childrenAges = encodeURIComponent(JSON.stringify(params.childrenAges || []));
+
       const url =
         `/hotel.html?hotelCode=${encodeURIComponent(btn.dataset.code)}` +
         `&checkin=${encodeURIComponent(params.checkin)}` +
         `&checkout=${encodeURIComponent(params.checkout)}` +
         `&adults=${encodeURIComponent(params.adults)}` +
         `&children=${encodeURIComponent(params.children)}` +
+        `&childrenAges=${childrenAges}` +
         `&name=${encodeURIComponent(btn.dataset.name || "")}` +
         `&zone=${encodeURIComponent(btn.dataset.zone || "")}` +
         `&dest=${encodeURIComponent(btn.dataset.dest || "")}`;
@@ -189,8 +222,6 @@ async function buscarHoteis(e) {
     }
 
     const data = await fetchJson(url);
-    console.log("SEARCH OK:", data);
-
     renderHotels(data, params);
     $("resultados")?.scrollIntoView?.({ behavior: "smooth" });
   } catch (err) {
@@ -205,4 +236,6 @@ async function buscarHoteis(e) {
 
 document.addEventListener("DOMContentLoaded", () => {
   $("searchForm")?.addEventListener("submit", buscarHoteis);
+  $("children")?.addEventListener("change", renderChildrenAgeFields);
+  renderChildrenAgeFields();
 });
