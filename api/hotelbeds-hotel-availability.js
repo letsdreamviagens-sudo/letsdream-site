@@ -19,19 +19,32 @@ export default async function handler(req, res) {
 
     const { hotelCode, checkin, checkout, adults = "2", children = "0" } = req.query;
 
+    let parsedChildrenAges = [];
+    try {
+      parsedChildrenAges = JSON.parse(req.query.childrenAges || "[]");
+    } catch {
+      parsedChildrenAges = [];
+    }
+
     if (!API_KEY || !SECRET) return res.status(500).json({ error: "Faltam HOTELBEDS_API_KEY / HOTELBEDS_SECRET" });
     if (!hotelCode || !checkin || !checkout) return res.status(400).json({ error: "hotelCode, checkin e checkout são obrigatórios" });
+
+    const adultCount = Number(adults) || 2;
+    const childCount = Number(children) || 0;
 
     const payload = {
       stay: { checkIn: checkin, checkOut: checkout },
       occupancies: [
         {
           rooms: 1,
-          adults: Number(adults) || 2,
-          children: Number(children) || 0,
+          adults: adultCount,
+          children: childCount,
           paxes: [
-            ...Array.from({ length: Number(adults) || 2 }, () => ({ type: "AD", age: 30 })),
-            ...Array.from({ length: Number(children) || 0 }, () => ({ type: "CH", age: 7 }))
+            ...Array.from({ length: adultCount }, () => ({ type: "AD", age: 30 })),
+            ...Array.from({ length: childCount }, (_, i) => ({
+              type: "CH",
+              age: Number(parsedChildrenAges[i] ?? 7)
+            }))
           ]
         }
       ],
