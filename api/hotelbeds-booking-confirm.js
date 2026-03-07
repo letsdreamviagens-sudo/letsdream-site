@@ -32,25 +32,25 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Faltam HOTELBEDS_API_KEY / HOTELBEDS_SECRET" });
   }
 
-  const url = `${BASE}/hotel-api/1.0/bookings`;
-
   const payload = {
     language: LANG,
     clientReference: body.clientReference || `LD-${Date.now()}`,
     holder: {
       name: String(body.holder.name).toUpperCase(),
-      surname: String(body.holder.surname).toUpperCase(),
+      surname: String(body.holder.surname).toUpperCase()
     },
     rooms: body.rooms.map((room) => ({
       rateKey: room.rateKey,
       paxes: room.paxes.map((p) => ({
-        type: p.type, // "AD" | "CH"
+        type: p.type,
         name: String(p.name || body.holder.name).toUpperCase(),
         surname: String(p.surname || body.holder.surname).toUpperCase(),
-        ...(p.age ? { age: Number(p.age) } : {}),
-      })),
-    })),
+        ...(p.age ? { age: Number(p.age) } : {})
+      }))
+    }))
   };
+
+  const url = `${BASE}/hotel-api/1.0/bookings`;
 
   const r = await fetch(url, {
     method: "POST",
@@ -58,9 +58,9 @@ export default async function handler(req, res) {
       "Content-Type": "application/json",
       "Api-key": API_KEY,
       "X-Signature": sign(API_KEY, SECRET),
-      "Accept": "application/json",
+      "Accept": "application/json"
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   });
 
   const data = await r.json().catch(() => ({}));
