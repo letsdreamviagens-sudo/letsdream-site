@@ -3,19 +3,18 @@ export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "GET") return res.status(405).json({ error: "Use GET" });
 
     const query = String(req.query.query || "").trim();
     if (!query) return res.status(400).json({ error: "query é obrigatório" });
 
-    // Nominatim (OpenStreetMap). Para MVP interno funciona bem.
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
 
     const r = await fetch(url, {
       headers: {
-        // User-Agent ajuda a evitar bloqueio
-        "User-Agent": "letsdream-internal/1.0 (contact: internal)"
+        "User-Agent": "letsdream-internal/1.0"
       }
     });
 
