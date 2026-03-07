@@ -1,18 +1,17 @@
-// app.js — Let’s Dream (B2B interno) — Página de BUSCA (index.html)
-// Fluxo: Buscar -> listar -> Selecionar -> redireciona para /hotel.html
-// Requer APIs:
-// - /api/hotelbeds-search
-// - /api/geocode  (para qualquer cidade via lat/lng)
+// app.js — Let’s Dream (B2B interno)
+// Fluxo: Buscar -> listar hotéis -> Selecionar -> abre hotel.html
 
-function $(id) { return document.getElementById(id); }
+function $(id) {
+  return document.getElementById(id);
+}
 
 function escapeHtml(str) {
   return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function toNum(x) {
@@ -28,6 +27,7 @@ function setHint(text) {
 async function fetchJson(url, options) {
   const r = await fetch(url, options);
   const data = await r.json().catch(() => ({}));
+
   if (!r.ok) {
     const msg = data?.error || data?.message || `Erro HTTP ${r.status}`;
     const err = new Error(msg);
@@ -35,10 +35,10 @@ async function fetchJson(url, options) {
     err.data = data;
     throw err;
   }
+
   return data;
 }
 
-// Mapeamentos rápidos (opcional). Se não bater, a gente usa geocode (lat/lng).
 const DESTINATION_MAP = {
   "NYC": "NYC",
   "NEW YORK": "NYC",
@@ -53,7 +53,7 @@ const DESTINATION_MAP = {
   "RIO DE JANEIRO": "RIO",
   "SÃO PAULO": "SAO",
   "SAO PAULO": "SAO",
-  "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 },
+  "ORLANDO": { lat: 28.538336, lng: -81.379234, radius: 35 }
 };
 
 function getFormParams() {
@@ -62,7 +62,7 @@ function getFormParams() {
     checkin: $("checkin")?.value || "",
     checkout: $("checkout")?.value || "",
     adults: $("adults")?.value || "2",
-    children: $("children")?.value || "0",
+    children: $("children")?.value || "0"
   };
 }
 
@@ -79,15 +79,15 @@ async function resolveCityToSearch(city) {
   const mapped = DESTINATION_MAP[key];
 
   if (mapped && typeof mapped === "object") {
-    return { mode: "latlng", lat: mapped.lat, lng: mapped.lng, radius: mapped.radius || 35, label: key };
-  }
-  if (mapped && typeof mapped === "string") {
-    return { mode: "destination", destination: mapped, label: key };
+    return { mode: "latlng", lat: mapped.lat, lng: mapped.lng, radius: mapped.radius || 35 };
   }
 
-  // ✅ fallback: geocode qualquer cidade/estado/bairro (ex: "Alagoas", "Maceió", "Maragogi")
+  if (mapped && typeof mapped === "string") {
+    return { mode: "destination", destination: mapped };
+  }
+
   const geo = await fetchJson(`/api/geocode?query=${encodeURIComponent(city)}`);
-  return { mode: "latlng", lat: geo.lat, lng: geo.lng, radius: 35, label: geo.displayName || city };
+  return { mode: "latlng", lat: geo.lat, lng: geo.lng, radius: 35 };
 }
 
 function renderHotels(data, params) {
@@ -96,6 +96,7 @@ function renderHotels(data, params) {
 
   const hotels = data?.hotels?.hotels || [];
   const currency = data?.currency || hotels?.[0]?.currency || "EUR";
+  const fx = toNum($("fxHome")?.value || 5);
 
   setHint(hotels.length ? `${hotels.length} hotéis` : "0 hotéis");
 
@@ -106,39 +107,42 @@ function renderHotels(data, params) {
 
   hotels.sort((a, b) => toNum(a.minRate) - toNum(b.minRate));
 
-  list.innerHTML = hotels.map(h => `
-    <article class="hotel" style="border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px;margin:12px 0;background:#fff;">
-      <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;">
-        <div style="flex:1">
-          <h3 style="margin:0 0 6px 0;">${escapeHtml(h.name)}</h3>
-          <div style="opacity:.85">${escapeHtml(h.zoneName || "-")} • ${escapeHtml(h.destinationName || "")}</div>
+  list.innerHTML = hotels.map((h) => {
+    const eur = toNum(h.minRate);
+    const brl = eur * fx;
+
+    return `
+      <article class="hotel-card">
+        <div class="hotel-card__content">
+          <div class="hotel-card__info">
+            <h3>${escapeHtml(h.name)}</h3>
+            <p>${escapeHtml(h.zoneName || "-")} • ${escapeHtml(h.destinationName || "")}</p>
+          </div>
+
+          <div class="hotel-card__price">
+            <small>Menor preço</small>
+            <div class="hotel-card__eur">${escapeHtml(currency)} ${eur.toFixed(2)}</div>
+            ${currency === "EUR" ? `<div class="hotel-card__brl">≈ R$ ${brl.toFixed(2)}</div>` : ""}
+            <button
+              type="button"
+              class="btn btn-primary hotel-select-btn"
+              data-code="${escapeHtml(h.code)}"
+              data-name="${escapeHtml(h.name)}"
+              data-zone="${escapeHtml(h.zoneName || "")}"
+              data-dest="${escapeHtml(h.destinationName || "")}"
+            >
+              Selecionar
+            </button>
+          </div>
         </div>
+      </article>
+    `;
+  }).join("");
 
-        <div style="text-align:right;min-width:180px;">
-          <small style="opacity:.8">Menor preço</small>
-          <div style="font-weight:700">${escapeHtml(currency)} ${toNum(h.minRate).toFixed(2)}</div>
-
-          <button
-            type="button"
-            class="btn btn-primary"
-            style="margin-top:10px;"
-            data-select="1"
-            data-code="${escapeHtml(h.code)}"
-            data-name="${escapeHtml(h.name)}"
-            data-zone="${escapeHtml(h.zoneName || '')}"
-            data-dest="${escapeHtml(h.destinationName || '')}"
-          >Selecionar</button>
-        </div>
-      </div>
-    </article>
-  `).join("");
-
-  list.querySelectorAll("[data-select]").forEach(btn => {
+  list.querySelectorAll(".hotel-select-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const hotelCode = btn.dataset.code;
-
       const url =
-        `/hotel.html?hotelCode=${encodeURIComponent(hotelCode)}` +
+        `/hotel.html?hotelCode=${encodeURIComponent(btn.dataset.code)}` +
         `&checkin=${encodeURIComponent(params.checkin)}` +
         `&checkout=${encodeURIComponent(params.checkout)}` +
         `&adults=${encodeURIComponent(params.adults)}` +
@@ -156,6 +160,7 @@ async function buscarHoteis(e) {
   e?.preventDefault?.();
 
   const params = getFormParams();
+
   if (!params.city || !params.checkin || !params.checkout) {
     alert("Preencha cidade, check-in e check-out.");
     return;
@@ -170,19 +175,29 @@ async function buscarHoteis(e) {
 
     let url;
     if (resolved.mode === "destination") {
-      url = buildHotelsApiUrlByDestination({ destination: resolved.destination, ...params });
+      url = buildHotelsApiUrlByDestination({
+        destination: resolved.destination,
+        ...params
+      });
     } else {
-      url = buildHotelsApiUrlByLatLng({ lat: resolved.lat, lng: resolved.lng, radiusKm: resolved.radius, ...params });
+      url = buildHotelsApiUrlByLatLng({
+        lat: resolved.lat,
+        lng: resolved.lng,
+        radiusKm: resolved.radius,
+        ...params
+      });
     }
 
     const data = await fetchJson(url);
-    console.log("SEARCH OK:", { resolved, data });
+    console.log("SEARCH OK:", data);
 
     renderHotels(data, params);
     $("resultados")?.scrollIntoView?.({ behavior: "smooth" });
   } catch (err) {
     console.error("SEARCH ERRO:", err);
-    if ($("hotelsList")) $("hotelsList").innerHTML = `<p class="note">Erro ao buscar hotéis. Veja o console (F12).</p>`;
+    if ($("hotelsList")) {
+      $("hotelsList").innerHTML = `<p class="note">Erro ao buscar hotéis. Veja o console (F12).</p>`;
+    }
     setHint("Erro");
     alert(`Erro ao buscar hotéis: ${err.message}`);
   }
@@ -190,9 +205,4 @@ async function buscarHoteis(e) {
 
 document.addEventListener("DOMContentLoaded", () => {
   $("searchForm")?.addEventListener("submit", buscarHoteis);
-
-  // esconder botões antigos se existirem
-  if ($("payBtn")) $("payBtn").style.display = "none";
-  if ($("whatsappBtn")) $("whatsappBtn").style.display = "none";
-  if ($("clearCartBtn")) $("clearCartBtn").style.display = "none";
 });
