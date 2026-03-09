@@ -4,34 +4,6 @@ function sign(apiKey, secret) {
   const ts = Math.floor(Date.now() / 1000);
   return crypto.createHash("sha256").update(apiKey + secret + ts).digest("hex");
 }
-function toNum(x) {
-  const n = Number(String(x ?? "").replace(",", "."));
-  return Number.isFinite(n) ? n : Infinity;
-}
-
-function extractCheapestRateKey(hotel) {
-  let best = null;
-  const rooms = hotel?.rooms || [];
-  for (const room of rooms) {
-    const rates = room?.rates || [];
-    for (const r of rates) {
-      const net = toNum(r?.net);
-      const rk = r?.rateKey;
-      if (!rk) continue;
-      if (!best || net < best.net) best = { net, rateKey: rk };
-    }
-  }
-  return best?.rateKey || null;
-}
-// Injeta rateKey (da tarifa mais barata) em cada hotel, quando existir
-try {
-  const hotels = data?.hotels?.hotels || [];
-  for (const h of hotels) {
-    const rk = extractCheapestRateKey(h);
-    if (rk) h.rateKey = rk;
-  }
-} catch {}
-
 
 export default async function handler(req, res) {
   try {
@@ -41,57 +13,77 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "GET") return res.status(405).json({ error: "Use GET" });
 
-    const { destination, checkin, checkout, adults="2", children="0", lat, lng, radius } = req.query || {};
+    const API_KEY = process.env.HOTELBEDS_API_KEY;
+    const SECRET = process.env.HOTELBEDS_SECRET;
+    const BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
+
+    if (!API_KEY || !SECRET) {
+      return res.status(500).json({ error: "Faltam HOTELBEDS_API_KEY / HOTELBEDS_SECRET" });
+    }
+
+    const {
+      destination,
+      checkin,
+      checkout,
+      adults = "2",
+      children = "0",
+      childrenAges = "[]",
+      lat,
+      lng,
+      radius
+    } = req.query;
 
     if (!checkin || !checkout) {
-      return res.status(400).json({ error: "Faltou checkin/checkout" });
-    }
-    if (!destination && (!lat || !lng)) {
-      return res.status(400).json({ error: "Faltou destination ou lat/lng" });
+      return res.status(400).json({ error: "checkin e checkout são obrigatórios" });
     }
 
-    const HOTELBEDS_API_KEY = process.env.HOTELBEDS_API_KEY;
-    const HOTELBEDS_SECRET = process.env.HOTELBEDS_SECRET;
-    const HOTELBEDS_BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com"; // sandbox
-    const HOTELBEDS_LANGUAGE = process.env.HOTELBEDS_LANGUAGE || "ENG";
-
-    if (!HOTELBEDS_API_KEY || !HOTELBEDS_SECRET) {
-      return res.status(500).json({ error: "Faltam variáveis HOTELBEDS_API_KEY / HOTELBEDS_SECRET" });
+    let parsedChildrenAges = [];
+    try {
+      parsedChildrenAges = JSON.parse(childrenAges || "[]");
+    } catch {
+      parsedChildrenAges = [];
     }
+
+    const adultCount = Number(adults) || 2;
+    const childCount = Number(children) || 0;
 
     const payload = {
       stay: { checkIn: checkin, checkOut: checkout },
       occupancies: [
         {
           rooms: 1,
-          adults: Number(adults) || 2,
-          children: Number(children) || 0,
-          paxes: buildPaxes(Number(adults)||2, Number(children)||0),
+          adults: adultCount,
+          children: childCount,
+          paxes: [
+            ...Array.from({ length: adultCount }, () => ({ type: "AD", age: 30 })),
+            ...Array.from({ length: childCount }, (_, i) => ({
+              type: "CH",
+              age: Number(parsedChildrenAges[i] ?? 7)
+            }))
+          ]
         }
-      ],
-      filter: { refundable: false },
-      language: HOTELBEDS_LANGUAGE,
+      ]
     };
 
-    if (destination) {
-      payload.destination = { code: String(destination).toUpperCase() };
-    } else {
+    if (lat && lng) {
       payload.geolocation = {
         latitude: Number(lat),
         longitude: Number(lng),
         radius: Number(radius || 35),
         unit: "km"
       };
+    } else if (destination) {
+      payload.destination = { code: String(destination), zone: 0 };
+    } else {
+      return res.status(400).json({ error: "destination ou (lat,lng) é obrigatório" });
     }
 
-    const url = `${HOTELBEDS_BASE}/hotel-api/1.0/hotels`;
-
-    const r = await fetch(url, {
+    const r = await fetch(`${BASE}/hotel-api/1.0/hotels`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Api-key": HOTELBEDS_API_KEY,
-        "X-Signature": sign(HOTELBEDS_API_KEY, HOTELBEDS_SECRET),
+        "Api-key": API_KEY,
+        "X-Signature": sign(API_KEY, SECRET),
         "Accept": "application/json"
       },
       body: JSON.stringify(payload)
@@ -101,23 +93,17 @@ export default async function handler(req, res) {
 
     if (!r.ok) {
       return res.status(r.status).json({
-        error: "Hotelbeds retornou erro",
-        status: r.status,
-        details: data
+        error: "Hotelbeds erro",
+        details: data,
+        sentPayload: payload
       });
     }
 
     return res.status(200).json(data);
   } catch (e) {
-    return res.status(500).json({ error: "Server error", message: String(e?.message || e) });
+    return res.status(500).json({
+      error: "Server error",
+      message: String(e?.message || e)
+    });
   }
-}
-
-function buildPaxes(adults, children){
-  // Hotelbeds usa paxes para idades — aqui deixamos "ADT" e "CHD" sem idade (funciona para maioria dos casos).
-  // Depois você pode adicionar idades pelo front.
-  const p = [];
-  for (let i=0;i<adults;i++) p.push({ type:"AD", age: 30 });
-  for (let i=0;i<children;i++) p.push({ type:"CH", age: 8 });
-  return p;
 }
