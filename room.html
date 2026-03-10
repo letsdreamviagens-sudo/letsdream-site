@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Detalhes do quarto • Let’s Dream</title>
+  <link rel="stylesheet" href="/hotel.css" />
+</head>
+<body>
+  <main class="container hotel-page">
+    <div class="hotel-header">
+      <div>
+        <h1 id="roomTitle">Carregando quarto...</h1>
+        <p id="roomHotelMeta" class="muted"></p>
+      </div>
+      <a href="javascript:history.back()" class="btn btn-secondary">Voltar</a>
+    </div>
+
+    <section class="hotel-hero">
+      <div id="roomHeroImg" class="hotel-hero-img"></div>
+      <div class="hotel-hero-overlay">
+        <span class="chip">Quarto selecionado</span>
+        <span class="chip">B2B interno</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Detalhes da tarifa</h2>
+      <div id="roomDetails"></div>
+    </section>
+
+    <section class="card">
+      <h2>Confirmar reserva</h2>
+
+      <div class="holder-row">
+        <input id="holderName" placeholder="Nome do titular" value="AGENTE" />
+        <input id="holderSurname" placeholder="Sobrenome do titular" value="LETS DREAM" />
+      </div>
+
+      <button id="confirmRoomBtn" class="btn btn-primary">Confirmar reserva</button>
+      <p id="roomStatusLine" class="muted" style="margin-top:10px;"></p>
+    </section>
+  </main>
+
+  <script src="/room.js"></script>
+</body>
+</html>
