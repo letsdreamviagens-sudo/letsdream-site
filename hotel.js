@@ -47,20 +47,35 @@ function brlEstimate(eur, fx) {
   return eur * fx;
 }
 
-function setHeroImage(hotel) {
+async function setHeroImage(hotel){
+
   const hero = document.getElementById("heroImg");
-  if (!hero) return;
+  if(!hero) return;
 
-  const dest = (hotel?.destinationName || "").toLowerCase();
+  try{
 
-  let img = "";
-  if (dest.includes("orlando")) img = "/img/orlando.jpg";
-  else if (dest.includes("london")) img = "/img/london.jpg";
-  else if (dest.includes("sao paulo") || dest.includes("são paulo")) img = "/img/saopaulo.jpg";
-  else if (dest.includes("maceio") || dest.includes("maceió") || dest.includes("alagoas")) img = "/img/alagoas.jpg";
-  else img = "/img/hotel-placeholder.jpg";
+    const r = await fetch(`/api/hotelbeds-content?hotelCode=${hotel.code}`);
+    const data = await r.json();
 
-  hero.style.backgroundImage = `url('${img}')`;
+    const img =
+      data?.hotel?.images?.[0]?.path ||
+      data?.hotel?.images?.[0]?.url;
+
+    if(img){
+
+      const url = img.startsWith("http")
+        ? img
+        : `https://photos.hotelbeds.com/giata/${img}`;
+
+      hero.style.backgroundImage = `url('${url}')`;
+      return;
+    }
+
+  }catch(e){
+    console.log("Content API image error", e);
+  }
+
+  hero.style.backgroundImage = "url('/img/hotel-placeholder.jpg')";
 }
 
 function renderRates(hotel) {
