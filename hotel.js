@@ -4,11 +4,11 @@ function qs(name) {
 
 function escapeHtml(str) {
   return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function toNum(x) {
@@ -31,15 +31,6 @@ async function fetchJson(url, options) {
   return data;
 }
 
-let selectedRateKey = null;
-let selectedCurrency = "EUR";
-let selectedNet = 0;
-let hotelCache = null;
-
-function brlEstimate(eur, fx) {
-  return eur * fx;
-}
-
 function getChildrenAgesFromQuery() {
   try {
     const raw = qs("childrenAges");
@@ -48,6 +39,12 @@ function getChildrenAgesFromQuery() {
   } catch {
     return [];
   }
+}
+
+let hotelCache = null;
+
+function brlEstimate(eur, fx) {
+  return eur * fx;
 }
 
 function setHeroImage(hotel) {
@@ -61,31 +58,9 @@ function setHeroImage(hotel) {
   else if (dest.includes("london")) img = "/img/london.jpg";
   else if (dest.includes("sao paulo") || dest.includes("são paulo")) img = "/img/saopaulo.jpg";
   else if (dest.includes("maceio") || dest.includes("maceió") || dest.includes("alagoas")) img = "/img/alagoas.jpg";
+  else img = "/img/hotel-placeholder.jpg";
 
-  if (img) hero.style.backgroundImage = `url('${img}')`;
-}
-
-function buildPaxesFromQuery(holderName, holderSurname) {
-  const adults = Math.max(1, Number(qs("adults") || "2"));
-  const children = Math.max(0, Number(qs("children") || "0"));
-  const childrenAges = getChildrenAgesFromQuery();
-
-  const paxes = [];
-
-  for (let i = 0; i < adults; i++) {
-    paxes.push({ type: "AD", name: holderName, surname: holderSurname });
-  }
-
-  for (let i = 0; i < children; i++) {
-    paxes.push({
-      type: "CH",
-      name: holderName,
-      surname: holderSurname,
-      age: Number(childrenAges[i] ?? 7)
-    });
-  }
-
-  return paxes;
+  hero.style.backgroundImage = `url('${img}')`;
 }
 
 function renderRates(hotel) {
@@ -94,7 +69,6 @@ function renderRates(hotel) {
   const wrap = document.getElementById("ratesWrap");
   const fxInput = document.getElementById("fx");
   const ratesHint = document.getElementById("ratesHint");
-  const confirmBtn = document.getElementById("confirmBtn");
 
   const rooms = hotel?.rooms || [];
   if (!rooms.length) {
@@ -103,7 +77,7 @@ function renderRates(hotel) {
     return;
   }
 
-  const fx = toNum(fxInput.value) || 0;
+  const fx = toNum(fxInput?.value || 5);
 
   const items = [];
   for (const room of rooms) {
@@ -120,7 +94,8 @@ function renderRates(hotel) {
     }
   }
 
-  items.sort((a,b) => a.net - b.net);
+  items.sort((a, b) => a.net - b.net);
+
   if (ratesHint) ratesHint.textContent = `${items.length} tarifas`;
 
   wrap.innerHTML = items.map((it, idx) => {
@@ -154,23 +129,35 @@ function renderRates(hotel) {
         return;
       }
 
-      selectedRateKey = it.rateKey;
-      selectedCurrency = it.currency;
-      selectedNet = it.net;
+      const fxAtual = toNum(document.getElementById("fx")?.value || 5);
+      const brlAtual = it.net * fxAtual;
 
-      document.getElementById("statusLine").textContent =
-        `Tarifa selecionada: ${selectedCurrency} ${selectedNet.toFixed(2)}.`;
+      const roomUrl =
+        `/room.html?hotelCode=${encodeURIComponent(qs("hotelCode"))}` +
+        `&checkin=${encodeURIComponent(qs("checkin") || "")}` +
+        `&checkout=${encodeURIComponent(qs("checkout") || "")}` +
+        `&adults=${encodeURIComponent(qs("adults") || "2")}` +
+        `&children=${encodeURIComponent(qs("children") || "0")}` +
+        `&childrenAges=${encodeURIComponent(qs("childrenAges") || "[]")}` +
+        `&hotelName=${encodeURIComponent(document.getElementById("hotelName")?.textContent || "")}` +
+        `&hotelMeta=${encodeURIComponent(document.getElementById("hotelMeta")?.textContent || "")}` +
+        `&roomName=${encodeURIComponent(it.roomName || "")}` +
+        `&board=${encodeURIComponent(it.board || "")}` +
+        `&currency=${encodeURIComponent(it.currency || "EUR")}` +
+        `&net=${encodeURIComponent(it.net)}` +
+        `&brl=${encodeURIComponent(brlAtual.toFixed(2))}` +
+        `&rateKey=${encodeURIComponent(it.rateKey)}`;
 
-      wrap.querySelectorAll(".pick-btn").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-
-      if (confirmBtn) confirmBtn.disabled = false;
+      window.location.href = roomUrl;
     });
   });
 
-  fxInput.addEventListener("input", () => {
-    renderRates(hotelCache);
-  });
+  if (fxInput && !fxInput.dataset.bound) {
+    fxInput.addEventListener("input", () => {
+      renderRates(hotelCache);
+    });
+    fxInput.dataset.bound = "1";
+  }
 }
 
 async function main() {
@@ -213,63 +200,6 @@ async function main() {
 
   setHeroImage(hotel);
   renderRates(hotel);
-
-  document.getElementById("confirmBtn").addEventListener("click", async () => {
-    try {
-      if (!selectedRateKey) {
-        alert("Escolha uma tarifa (quarto) antes de confirmar.");
-        return;
-      }
-
-      const holderName = (document.getElementById("holderName").value || "").trim();
-      const holderSurname = (document.getElementById("holderSurname").value || "").trim();
-
-      if (!holderName || !holderSurname) {
-        alert("Preencha nome e sobrenome do titular.");
-        return;
-      }
-
-      document.getElementById("statusLine").textContent = "CheckRate...";
-
-      await fetchJson("/api/hotelbeds-checkrate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rateKey: selectedRateKey })
-      });
-
-      document.getElementById("statusLine").textContent = "Confirmando booking...";
-
-      const booking = await fetchJson("/api/hotelbeds-booking-confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientReference: `LD-${Date.now()}`,
-          holder: { name: holderName, surname: holderSurname },
-          rooms: [
-            {
-              rateKey: selectedRateKey,
-              paxes: buildPaxesFromQuery(holderName, holderSurname)
-            }
-          ]
-        })
-      });
-
-      const ref = booking?.booking?.reference || booking?.reference || "OK";
-      document.getElementById("statusLine").textContent = `Reserva confirmada ✅ Ref: ${ref}`;
-      alert(`Reserva CONFIRMADA!\nReferência: ${ref}`);
-    } catch (e) {
-      console.error("CONFIRM ERROR FULL:", e);
-      console.error("CONFIRM ERROR DETAILS:", e?.data?.details || e?.data || null);
-
-      const detailsTxt = JSON.stringify(e?.data?.details || e?.data || {}, null, 2);
-
-      document.getElementById("statusLine").textContent = `Erro: ${e.message}`;
-
-      alert(
-        `Erro ao confirmar: ${e.message}\n\nDETALHES:\n${detailsTxt.slice(0, 1800)}`
-      );
-    }
-  });
 }
 
 main().catch(err => {
