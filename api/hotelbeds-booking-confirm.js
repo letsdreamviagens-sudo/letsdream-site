@@ -12,59 +12,79 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
 
-  const body = req.body || {};
-  const rateKey = body?.rooms?.[0]?.rateKey;
+  try {
+    const body = req.body || {};
+    const rateKey = body?.rooms?.[0]?.rateKey;
 
-  if (!rateKey) return res.status(400).json({ error: "rooms[0].rateKey é obrigatório" });
-  if (!body?.holder?.name || !body?.holder?.surname) {
-    return res.status(400).json({ error: "holder.name e holder.surname são obrigatórios" });
+    if (!rateKey) {
+      return res.status(400).json({ error: "rooms[0].rateKey é obrigatório" });
+    }
+
+    if (!body?.holder?.name || !body?.holder?.surname) {
+      return res.status(400).json({ error: "holder.name e holder.surname são obrigatórios" });
+    }
+
+    if (!Array.isArray(body?.rooms?.[0]?.paxes) || body.rooms[0].paxes.length === 0) {
+      return res.status(400).json({ error: "rooms[0].paxes deve ter pelo menos 1 hóspede" });
+    }
+
+    const API_KEY = process.env.HOTELBEDS_API_KEY;
+    const SECRET = process.env.HOTELBEDS_SECRET;
+    const BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
+    const LANG = process.env.HOTELBEDS_LANGUAGE || "ENG";
+
+    if (!API_KEY || !SECRET) {
+      return res.status(500).json({ error: "Faltam HOTELBEDS_API_KEY / HOTELBEDS_SECRET" });
+    }
+
+    const payload = {
+      language: LANG,
+      clientReference: body.clientReference || `LD-${Date.now()}`,
+      holder: {
+        name: String(body.holder.name).toUpperCase(),
+        surname: String(body.holder.surname).toUpperCase()
+      },
+      rooms: body.rooms.map((room) => ({
+        rateKey: room.rateKey,
+        paxes: room.paxes.map((p) => ({
+          type: p.type,
+          name: String(p.name || body.holder.name).toUpperCase(),
+          surname: String(p.surname || body.holder.surname).toUpperCase(),
+          ...(p.age ? { age: Number(p.age) } : {})
+        }))
+      })),
+      tolerance: 2,
+      remark: "B2B internal booking"
+    };
+
+    const url = `${BASE}/hotel-api/1.0/bookings`;
+
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-key": API_KEY,
+        "X-Signature": sign(API_KEY, SECRET),
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await r.json().catch(() => ({}));
+
+    if (!r.ok) {
+      return res.status(r.status).json({
+        error: "Booking falhou",
+        details: data,
+        sentPayload: payload
+      });
+    }
+
+    return res.status(200).json(data);
+  } catch (e) {
+    return res.status(500).json({
+      error: "Server error",
+      message: String(e?.message || e)
+    });
   }
-  if (!Array.isArray(body?.rooms?.[0]?.paxes) || body.rooms[0].paxes.length === 0) {
-    return res.status(400).json({ error: "rooms[0].paxes deve ter pelo menos 1 hóspede" });
-  }
-
-  const API_KEY = process.env.HOTELBEDS_API_KEY;
-  const SECRET = process.env.HOTELBEDS_SECRET;
-  const BASE = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
-  const LANG = process.env.HOTELBEDS_LANGUAGE || "ENG";
-
-  if (!API_KEY || !SECRET) {
-    return res.status(500).json({ error: "Faltam HOTELBEDS_API_KEY / HOTELBEDS_SECRET" });
-  }
-
-  const payload = {
-    language: LANG,
-    clientReference: body.clientReference || `LD-${Date.now()}`,
-    holder: {
-      name: String(body.holder.name).toUpperCase(),
-      surname: String(body.holder.surname).toUpperCase()
-    },
-    rooms: body.rooms.map((room) => ({
-      rateKey: room.rateKey,
-      paxes: room.paxes.map((p) => ({
-        type: p.type,
-        name: String(p.name || body.holder.name).toUpperCase(),
-        surname: String(p.surname || body.holder.surname).toUpperCase(),
-        ...(p.age ? { age: Number(p.age) } : {})
-      }))
-    }))
-  };
-
-  const url = `${BASE}/hotel-api/1.0/bookings`;
-
-  const r = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Api-key": API_KEY,
-      "X-Signature": sign(API_KEY, SECRET),
-      "Accept": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) return res.status(r.status).json({ error: "Booking falhou", details: data });
-
-  return res.status(200).json(data);
 }
