@@ -61,16 +61,24 @@ function renderRoomDetails() {
   document.getElementById("roomHotel").textContent = hotelName;
 }
 
-async function confirmRoomBooking() {
-  const rateKey = qs("rateKey");
+} catch (e) {
+  console.error("ROOM CONFIRM ERROR:", e);
+  console.error("ROOM CONFIRM ERROR DATA:", e?.data || null);
+  console.error("ROOM CONFIRM ERROR DETAILS:", e?.data?.details || null);
+  console.error("ROOM CONFIRM SENT PAYLOAD:", e?.data?.sentPayload || null);
 
-  const holderName = document.getElementById("holderName").value;
-  const holderSurname = document.getElementById("holderSurname").value;
+  const detailsTxt = JSON.stringify(
+    e?.data?.details || e?.data || {},
+    null,
+    2
+  );
 
-  if (!holderName || !holderSurname) {
-    alert("Preencha nome e sobrenome");
-    return;
-  }
+  document.getElementById("status").innerText = `Erro: ${e.message}`;
+
+  alert(
+    `Erro ao confirmar booking: ${e.message}\n\nDETALHES:\n${detailsTxt.slice(0, 1800)}`
+  );
+}
 
   try {
     const bookingPayload = {
